@@ -1,0 +1,13 @@
+#
+# Eclipse related entries
+#
+.classpath
+.project
+.settings
+bin
+
+#
+# Gradle related entries
+#
+.gradle
+build
