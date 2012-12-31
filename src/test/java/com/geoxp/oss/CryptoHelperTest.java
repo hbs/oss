@@ -1,5 +1,6 @@
 package com.geoxp.oss;
 
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.security.KeyFactory;
@@ -15,7 +16,9 @@ import java.security.spec.KeySpec;
 import java.security.spec.RSAPrivateKeySpec;
 import java.security.spec.RSAPublicKeySpec;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
 import org.bouncycastle.crypto.InvalidCipherTextException;
@@ -29,13 +32,15 @@ import org.bouncycastle.crypto.params.DSAPublicKeyParameters;
 import org.bouncycastle.crypto.params.RSAKeyGenerationParameters;
 import org.bouncycastle.crypto.params.RSAKeyParameters;
 import org.bouncycastle.crypto.params.RSAPrivateCrtKeyParameters;
+import org.bouncycastle.openpgp.PGPPublicKey;
 import org.bouncycastle.util.encoders.Base64;
 import org.bouncycastle.util.encoders.Hex;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.geoxp.oss.CryptoHelper.SSSS;
+import com.geoxp.oss.CryptoHelper.SSHAgentClient;
+import com.geoxp.oss.CryptoHelper.SSHAgentClient.SSHKey;
 import com.geoxp.oss.CryptoHelper.SSSSGF256Polynomial;
 
 
@@ -525,7 +530,7 @@ public class CryptoHelperTest {
   }
   
   @Test
-  public void testSSSSRecover_DuplicateShare() throws Exception {
+  public void testSSSSRecover_DuplicateShare() {
     
     List<byte[]> secrets = new ArrayList<byte[]>();
     
@@ -538,4 +543,58 @@ public class CryptoHelperTest {
     Assert.assertNull(secret);
   }
 
+  //
+  // PGP
+  //
+  
+  @Test
+  public void testPGPKeysFromKeyRing() throws IOException {
+    String keyring = "-----BEGIN PGP PUBLIC KEY BLOCK-----\n" +
+    "Version: GnuPG v1.4.6 (Darwin)\n" +
+    "\n" +
+    "mQGiBFDfB/cRBADE6Ee9TtA961l9dtQYauMJ5LCo/YWhz1dft0KmqI7k7sKWLKfz\n" +
+    "OhTOnT61fwEhHdHlOwQdCD7EpeKEGfSWxeajdtuKE9/QP+PJalGA5s48XrdqfrkA\n" +
+    "QJkK+77atAixoi4r9ozljP9vXHIltAlDkaoDdRZcVe1J+pW0Kw7AGHvA/wCgvwKI\n" +
+    "cuyep7ViScOXkCwZ6+7eFqsD/RLzBN7mb2h+yEY+XvFqQPvenvZS/sw3JZf/cY4u\n" +
+    "Mi+FzkTb0BB1X75skLvvO1JYpraGphSB075LzHW/ohKQacaY74rpxpxIZz9EjHTa\n" +
+    "JSmLTT6SBQMlX+LSNwHQYQWPzitQ1os6LRmgiE5pfZGlvOLyC+sHeDxUzPEl1069\n" +
+    "NqXEA/9r1e4eAu7HLED2XIP3fgOV/kkDrJC1EX0N8Ck/ON0S+hJYK1b0W6TKWdN6\n" +
+    "tVH/OL37tymsfI+qSEhKNVe2sDcybG6trJj528puJdVpb2wqMwbCdxx7Cr3wX61x\n" +
+    "jFQJQwqyXCWakPbWfhxvron62/RamTmf2KSMgf79yv29WOE5+7QbTWFzdGVyU2Vj\n" +
+    "cmV0R2VuZXJhdG9yVGVzdCMxiGYEExECACYFAlDfB/cCGwMFCQABUYAGCwkIBwMC\n" +
+    "BBUCCAMEFgIDAQIeAQIXgAAKCRD3wPNFoZ4UAw4KAJ47rbv6e5oy0p0qOu1YjCUn\n" +
+    "7Sm+PACePylkvbBc7jkoJrc8n+2ZJRBL/vK5Ag0EUN8H/BAIAJdLjwQf2NwhkW/9\n" +
+    "h7wV2luiCvzwPxhvOytPM9ZtckyK3f9Biam29uZt2P/EgYAlEb7odHuQ8rYquuM8\n" +
+    "rZ5bNMY4SlgDfGTAYIPTC6r3oPoxVzg3bfL/VfAQWZTz7gsNexBqoxmCEGG8cbp4\n" +
+    "/YYTArrW0pdAjIve/H2Wb3C6+ntbPXq60BJTlpbJXh3CPL95jUF0bJbt/WwOdE5r\n" +
+    "TQ0WKikTY8RV18XekJAHRT0PrHjecAsvY1NOXlQJGbJes7unQDdCkQ2RRbg4Vdt4\n" +
+    "SHSdKunIIxbLEOj6HuJyvkbQ65yHSnfLtoS2XpNe9ft/+ZtXjHsr01XE0cqbrSwf\n" +
+    "GqO9068AAwcIAJS0myak/K/rqwC/MGQ7U4OEovVY/n9mpPwQKN0bUSU/uDLKy3JW\n" +
+    "vqO5vvWr9iWqyq/GfPeJ2HZ/kvGiyR7Qy/7gh8Q8yDLn9qrz06ewd9G3Tyxj8n80\n" +
+    "re0vRopQsyKNLhtC5ZEtq9Q3yfqt7ib8sf8hLlxCzpDNlIUdbTqpFcnfxc8p7aQB\n" +
+    "4lqrT32fGtYtDjUt86VzT4LCRNTgMOxPF5iYOiOzB0iX7oPoCqGFxl0ZTvxqMpgV\n" +
+    "/hr8CWJlW3AAcc3l2HONQe/Gg5nrTtm72i0vH8n8F/GgfZmU8KJc7c7cFhtGDTWV\n" +
+    "dkNjrqBtuiuKpZcwf14stCFfAmZXeYZ+xTCITwQYEQIADwUCUN8H/AIbDAUJAAFR\n" +
+    "gAAKCRD3wPNFoZ4UA9oLAJsFL3JRi2zHxwutO7PqMfItSub0cACgs7BQ3nPA5DP+\n" +
+    "Hhr3Xwsu7+wSOKk=\n" +
+    "=H4+g\n" +
+    "-----END PGP PUBLIC KEY BLOCK-----\n";
+    
+    List<PGPPublicKey> pubkeys = CryptoHelper.PGPPublicKeysFromKeyRing(keyring);
+    
+    Assert.assertEquals(2, pubkeys.size());
+    
+    Set<Long> keyids = new HashSet<Long>();
+    
+    for (PGPPublicKey key: pubkeys) {
+      keyids.add(key.getKeyID());
+    }
+    
+    Assert.assertTrue(keyids.contains(0xf7c0f345a19e1403L));
+    Assert.assertTrue(keyids.contains(0x60744f29e427916cL));
+  }
+  
+  //
+  // SSHAgent
+  //  
 }
