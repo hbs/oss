@@ -5,6 +5,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.security.InvalidKeyException;
 import java.security.Key;
@@ -27,6 +28,8 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
 import java.security.spec.RSAPublicKeySpec;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 
 import javax.crypto.BadPaddingException;
@@ -34,11 +37,27 @@ import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 
+import org.bouncycastle.bcpg.ArmoredOutputStream;
 import org.bouncycastle.crypto.InvalidCipherTextException;
 import org.bouncycastle.crypto.engines.AESWrapEngine;
 import org.bouncycastle.crypto.paddings.PKCS7Padding;
 import org.bouncycastle.crypto.params.KeyParameter;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.openpgp.PGPCompressedDataGenerator;
+import org.bouncycastle.openpgp.PGPEncryptedDataGenerator;
+import org.bouncycastle.openpgp.PGPException;
+import org.bouncycastle.openpgp.PGPKeyRing;
+import org.bouncycastle.openpgp.PGPLiteralData;
+import org.bouncycastle.openpgp.PGPLiteralDataGenerator;
+import org.bouncycastle.openpgp.PGPObjectFactory;
+import org.bouncycastle.openpgp.PGPPublicKey;
+import org.bouncycastle.openpgp.PGPUtil;
+import org.bouncycastle.openpgp.operator.bc.BcPGPDataEncryptorBuilder;
+import org.bouncycastle.openpgp.operator.bc.BcPublicKeyKeyEncryptionMethodGenerator;
+import org.bouncycastle.util.encoders.Hex;
+
+import com.etsy.net.JUDS;
+import com.etsy.net.UnixDomainSocketClient;
 
 /**
  * Helper class containing various methods used to
@@ -199,6 +218,7 @@ public class CryptoHelper {
     try {
       return unpadPKCS7(aes.unwrap(data, 0, data.length));
     } catch (InvalidCipherTextException icte) {
+      icte.printStackTrace();
       return null;
     }
   }
@@ -339,7 +359,7 @@ public class CryptoHelper {
     // Extract SSH key type
     //
     
-    byte[] keyType = getNS(blob,0);
+    byte[] keyType = decodeNetworkString(blob,0);
     int offset = 4 + keyType.length;
     
     String keyTypeStr = new String(keyType);
@@ -350,19 +370,19 @@ public class CryptoHelper {
         // Extract DSA key parameters p q g and y
         //
         
-        byte[] p = getNS(blob, offset);
+        byte[] p = decodeNetworkString(blob, offset);
         offset += 4;
         offset += p.length;
 
-        byte[] q = getNS(blob, offset);
+        byte[] q = decodeNetworkString(blob, offset);
         offset += 4;
         offset += q.length;
 
-        byte[] g = getNS(blob, offset);
+        byte[] g = decodeNetworkString(blob, offset);
         offset += 4;
         offset += g.length;
 
-        byte[] y = getNS(blob, offset);
+        byte[] y = decodeNetworkString(blob, offset);
         offset += 4;
         offset += y.length;
 
@@ -373,11 +393,11 @@ public class CryptoHelper {
         // Extract RSA key parameters e and n
         //
 
-        byte[] e = getNS(blob, offset);
+        byte[] e = decodeNetworkString(blob, offset);
         offset += 4;
         offset += e.length;
 
-        byte[] n = getNS(blob, offset);
+        byte[] n = decodeNetworkString(blob, offset);
         offset += 4;
         offset += n.length;
 
@@ -432,9 +452,9 @@ public class CryptoHelper {
       // Encode parameters as Network Strings
       //
       
-      byte[] tns = encodeNS(SSH_RSA_PREFIX.getBytes());
-      byte[] ens = encodeNS(e.toByteArray());
-      byte[] nns = encodeNS(n.toByteArray());
+      byte[] tns = encodeNetworkString(SSH_RSA_PREFIX.getBytes());
+      byte[] ens = encodeNetworkString(e.toByteArray());
+      byte[] nns = encodeNetworkString(n.toByteArray());
       
       //
       // Allocate array for blob
@@ -466,11 +486,11 @@ public class CryptoHelper {
       // Encode parameters as network strings
       //
       
-      byte[] tns = encodeNS(SSH_DSS_PREFIX.getBytes());
-      byte[] pns = encodeNS(p.toByteArray());
-      byte[] qns = encodeNS(q.toByteArray());
-      byte[] gns = encodeNS(g.toByteArray());
-      byte[] yns = encodeNS(y.toByteArray());
+      byte[] tns = encodeNetworkString(SSH_DSS_PREFIX.getBytes());
+      byte[] pns = encodeNetworkString(p.toByteArray());
+      byte[] qns = encodeNetworkString(q.toByteArray());
+      byte[] gns = encodeNetworkString(g.toByteArray());
+      byte[] yns = encodeNetworkString(y.toByteArray());
       
       //
       // Allocate array for blob
@@ -521,8 +541,8 @@ public class CryptoHelper {
         // Build the SSH sigBlob
         //
         
-        byte[] tns = encodeNS(SSH_RSA_PREFIX.getBytes());
-        byte[] sns = encodeNS(sig);
+        byte[] tns = encodeNetworkString(SSH_RSA_PREFIX.getBytes());
+        byte[] sns = encodeNetworkString(sig);
         
         byte[] blob = new byte[tns.length + sns.length];
         
@@ -556,8 +576,8 @@ public class CryptoHelper {
         System.arraycopy(asn1sig, 4 + frst, sshsig, 0, 20);
         System.arraycopy(asn1sig, 6 + asn1sig[3] + scnd, sshsig, 20, 20);
 
-        byte[] tns = encodeNS(SSH_DSS_PREFIX.getBytes());
-        byte[] sns = encodeNS(sshsig);
+        byte[] tns = encodeNetworkString(SSH_DSS_PREFIX.getBytes());
+        byte[] sns = encodeNetworkString(sshsig);
         
         byte[] blob = new byte[tns.length + sns.length];
         System.arraycopy(tns, 0, blob, 0, tns.length);
@@ -580,16 +600,18 @@ public class CryptoHelper {
    * Verify the signature included in an SSH signature blob
    *
    * @param data The data whose signature must be verified
+   * @param off Offset in the data array
+   * @param len Length of data to sign
    * @param sigBlob The SSH signature blob containing the signature
    * @param pubkey The public key to use to verify the signature
    * @return true if the signature was verified successfully, false in all other cases (including if an error occurs).
    */
-  public static boolean sshSignatureBlobVerify(byte[] data, byte[] sigBlob, PublicKey pubkey) {
+  public static boolean sshSignatureBlobVerify(byte[] data, int off, int len, byte[] sigBlob, PublicKey pubkey) {
     
     Signature signature = null;
     
     int offset = 0;
-    byte[] sigType = getNS(sigBlob, 0);
+    byte[] sigType = decodeNetworkString(sigBlob, 0);
     
     offset += 4;
     offset += sigType.length;
@@ -605,9 +627,9 @@ public class CryptoHelper {
         signature = java.security.Signature.getInstance("SHA1withRSA");
         signature.initVerify(pubkey);
         
-        signature.update(data);
+        signature.update(data, off, len);
 
-        byte[] sig = getNS(sigBlob, offset);
+        byte[] sig = decodeNetworkString(sigBlob, offset);
         
         return signature.verify(sig);
       } else if (pubkey instanceof DSAPublicKey && SSH_DSS_PREFIX.equals(sigTypeStr)) {
@@ -618,13 +640,13 @@ public class CryptoHelper {
         signature = java.security.Signature.getInstance("SHA1withDSA");
         signature.initVerify(pubkey);
         
-        signature.update(data);
+        signature.update(data, off, len);
         
         //
         // Convert SSH signature blob to ASN.1 signature
         //
         
-        byte[] rs = getNS(sigBlob, offset);
+        byte[] rs = decodeNetworkString(sigBlob, offset);
         
         // ASN.1
         int frst = ((rs[0] & 0x80) != 0 ? 1 : 0);
@@ -666,6 +688,10 @@ public class CryptoHelper {
     }
   }
 
+  public static boolean sshSignatureBlobVerify(byte[] data, byte[] sigBlob, PublicKey pubkey) {
+    return sshSignatureBlobVerify(data, 0, data.length, sigBlob, pubkey);
+  }
+  
   /**
    * Extract an encoded Network String
    * A Network String has its length on 4 bytes (MSB first).
@@ -674,15 +700,21 @@ public class CryptoHelper {
    * @param offset Offset at which the network string starts.
    * @return
    */
-  private static byte[] getNS(byte[] data, int offset) {
-    int i = 0;
-    i |= (data[offset] << 24) & 0xff000000;
-    i |= (data[offset + 1] << 16) &0x00ff0000;
-    i |= (data[offset + 2] << 8) &0x0000ff00;
-    i |= data[offset + 3] &0x000000ff;
+  public static byte[] decodeNetworkString(byte[] data, int offset) {
     
-    byte[] string = new byte[i];
-    System.arraycopy(data, offset + 4, string, 0, i);
+    int len = unpackInt(data, offset);
+    
+    //
+    // Safety net, don't allow to allocate more than
+    // what's left in the array
+    //
+    
+    if (len > data.length - offset - 4) {
+      return null;
+    }
+    
+    byte[] string = new byte[len];
+    System.arraycopy(data, offset + 4, string, 0, len);
     
     return string;
   }
@@ -694,20 +726,363 @@ public class CryptoHelper {
    * @param data Data to encode
    * @return the encoded data
    */
-  private static byte[] encodeNS(byte[] data) {
+  public static byte[] encodeNetworkString(byte[] data) {
     
     byte[] ns = new byte[4 + data.length];
+   
+    //
+    // Pack data length
+    //
     
-    ns[0] = (byte) ((data.length >> 24) & 0x000000ff);
-    ns[1] = (byte) ((data.length >> 16) & 0x000000ff);
-    ns[2] = (byte) ((data.length >> 8) & 0x000000ff);
-    ns[3] = (byte) (data.length & 0x000000ff);
+    packInt(data.length, ns, 0);
     
     System.arraycopy(data, 0, ns, 4, data.length);
     
     return ns;
   }
   
+  /**
+   * Pack an integer value in a byte array, MSB first
+   * 
+   * @param value Value to pack
+   * @param data Byte array where to pack
+   * @param offset Offset where to start
+   */
+  private static void packInt(int value, byte[] data, int offset) {
+    data[0] = (byte) ((value >> 24) & 0x000000ff);
+    data[1] = (byte) ((value >> 16) & 0x000000ff);
+    data[2] = (byte) ((value >> 8) & 0x000000ff);
+    data[3] = (byte) (value & 0x000000ff);
+  }
+  
+  /**
+   * Unpack an int stored as MSB first in a byte array
+   * @param data Array from which to extract the int
+   * @param offset Offset in the array where the int is stored
+   * @return
+   */
+  private static int unpackInt(byte[] data, int offset) {
+    int value = 0;
+    value |= (data[offset] << 24) & 0xff000000;
+    value |= (data[offset + 1] << 16) &0x00ff0000;
+    value |= (data[offset + 2] << 8) &0x0000ff00;
+    value |= data[offset + 3] &0x000000ff;
+    
+    return value;
+  }
+  
+  public static class SSHAgentClient {
+    
+    //
+    // Request / Response codes from OpenSSH implementation
+    // Some are not supported (yet) by this implementation
+    //
+
+    //private static final int AGENTC_REQUEST_RSA_IDENTITIES = 1;
+    //private static final int AGENT_RSA_IDENTITIES_ANSWER   = 2;
+    private static final int AGENT_FAILURE                 = 5;
+    private static final int AGENT_SUCCESS                 = 6;
+
+    //private static final int AGENTC_REMOVE_RSA_IDENTITY       = 8;
+    //private static final int AGENTC_REMOVE_ALL_RSA_IDENTITIES = 9;
+
+    private static final int AGENTC_REQUEST_IDENTITIES    = 11;
+    private static final int AGENT_IDENTITIES_ANSWER      = 12;
+    private static final int AGENTC_SIGN_REQUEST          = 13;
+    private static final int AGENT_SIGN_RESPONSE          = 14;
+    //private static final int AGENTC_ADD_IDENTITY          = 17;
+    //private static final int AGENTC_REMOVE_IDENTITY       = 18;
+    //private static final int AGENTC_REMOVE_ALL_IDENTITIES = 19;
+
+    private UnixDomainSocketClient socket = null;
+    
+    private ByteArrayOutputStream buffer = null;
+
+    /**
+     * Callback interface to handle agent response
+     */
+    private static interface AgentCallback {
+      public Object onSuccess(byte[] packet);
+      public Object onFailure(byte[] packet);    
+    }
+    
+    public static class SSHKey {
+      public byte[] blob;
+      public String comment;
+      public String fingerprint;
+      
+      public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(fingerprint);
+        sb.append(" ");
+        sb.append(comment);
+        return sb.toString();
+      }
+    }
+    
+    /**
+     * Create an instance of SSHAgentClient using the Unix Socket defined in
+     * the environment variable SSH_AUTH_SOCK as set by ssh-agent
+     * 
+     * @throws IOException in case of errors
+     */
+    public SSHAgentClient() throws IOException {
+      this(System.getenv("SSH_AUTH_SOCK"));
+    }
+    
+    /**
+     * Create an instance of SSHAgentClient using the provided Unix Socket
+     * 
+     * @param path Path to the Unix domain socket to use.
+     * @throws IOException In case of errors
+     */
+    public SSHAgentClient(String path) throws IOException {
+      //
+      // Connect to the local socket of the SSH agent
+      //
+    
+      socket = new UnixDomainSocketClient(path, JUDS.SOCK_STREAM);
+      
+      //
+      // Create an input buffer for data exchange with the socket
+      //
+      
+      buffer = new ByteArrayOutputStream();        
+    }
+    
+    public void close() {
+      socket.close();
+    }
+    
+    /**
+     * Send a request to the SSH Agent
+     * 
+     * @param type Type of request to send
+     * @param data Data packet of the request
+     * @throws IOException in case of errors
+     */
+    private void sendRequest(int type, byte[] data) throws IOException {
+      
+      //
+      // Allocate request packet.
+      // It needs to hold the request data, the data length
+      // and the request type.
+      //
+      
+      byte[] packet = new byte[data.length + 4 + 1];
+      
+      //
+      // Pack data length + 1 (request type)
+      //
+      
+      packInt(data.length + 1, packet, 0);
+      
+      //
+      // Store request type
+      //
+      
+      packet[4] = (byte) type;
+      
+      //
+      // Copy request data
+      //
+      
+      System.arraycopy(data, 0, packet, 5, data.length);
+      
+      //
+      // Write request packet onto the socket
+      //
+      
+      socket.getOutputStream().write(packet);
+      socket.getOutputStream().flush();
+    }
+       
+    /**
+     * Listen to agent response and call the appropriate method
+     * of the provided callback.
+     * 
+     * @param callback
+     * @return
+     * @throws IOException
+     */
+    private Object awaitResponse(AgentCallback callback) throws IOException {
+      
+      int packetLen = -1;
+      
+      byte[] buf = new byte[128];
+          
+      while(true) {
+        
+        int len = socket.getInputStream().read(buf);
+        
+        //
+        // Add data to buffer
+        //
+        
+        if (len > 0) {
+          buffer.write(buf, 0, len);
+        }
+        
+        //
+        // If buffer contains less than 4 bytes, continue reading data
+        //
+        
+        if (buffer.size() <= 4) {
+          continue;
+        }
+        
+        //
+        // If packet len has not yet been extracted, read it.
+        //
+        
+        if (packetLen < 0) {
+          packetLen = unpackInt(buffer.toByteArray(), 0);        
+        }
+        
+        //
+        // If buffer does not the full packet yet, continue reading
+        //
+        
+        if (buffer.size() < 4 + packetLen) {
+          continue;
+        }
+        
+        //
+        // Buffer contains the packet data,
+        // convert input buffer to byte array
+        //
+        
+        byte[] inbuf = buffer.toByteArray();
+
+        //
+        // Extract packet data
+        //
+        
+        byte[] packet = new byte[packetLen];
+        System.arraycopy(inbuf, 4, packet, 0, packetLen);
+        
+        //
+        // Put extraneous data at the beginning of 'buffer'
+        //
+        
+        buffer.reset();
+        buffer.write(inbuf, 4 + packetLen, inbuf.length - packetLen - 4);
+        
+        //
+        // Extract response type
+        //
+        
+        int respType = packet[0];
+        
+        if (AGENT_FAILURE == respType) {
+          return callback.onFailure(packet);
+        } else if (AGENT_SUCCESS == respType) {
+          return callback.onSuccess(new byte[0]);
+        } else {
+          return callback.onSuccess(packet);
+        }
+      }
+    }
+
+    /**
+     * Request the agent to sign 'data' using the provided key blob
+     * 
+     * @param keyblob SSH Key Blob
+     * @param data Data to sign
+     * @return An SSH signature blob
+     */
+    public byte[] sign(byte[] keyblob, byte[] data) throws IOException {
+      
+      //
+      // Create request packet
+      //
+      
+      ByteArrayOutputStream request = new ByteArrayOutputStream();
+      
+      request.write(encodeNetworkString(keyblob));
+      request.write(encodeNetworkString(data));
+      request.write(new byte[4]);
+      
+      sendRequest(AGENTC_SIGN_REQUEST, request.toByteArray());
+      
+      return (byte[]) awaitResponse(new AgentCallback() {
+        @Override
+        public Object onFailure(byte[] packet) {
+          return null;
+        }
+        @Override
+        public Object onSuccess(byte[] packet) {
+          if (AGENT_SIGN_RESPONSE != packet[0]) {
+            return null;
+          }
+          
+          byte[] signature = decodeNetworkString(packet, 1);
+          return signature;
+        }
+      });
+    }
+
+    public List<SSHKey> requestIdentities() throws IOException {
+      sendRequest(AGENTC_REQUEST_IDENTITIES, new byte[0]);
+      
+      Object result = awaitResponse(new AgentCallback() {
+        @Override
+        public Object onFailure(byte[] packet) {
+          return null;
+        }
+        
+        @Override
+        public Object onSuccess(byte[] packet) {
+          
+          if (AGENT_IDENTITIES_ANSWER != packet[0]) {
+            return null;
+          }
+          
+          List<SSHKey> keys = new ArrayList<SSHKey>();
+          
+          int offset = 1;
+          
+          int numKeys = unpackInt(packet, offset);        
+          offset += 4;
+          
+          for (int i = 0; i < numKeys; i++) {
+      
+            SSHKey key = new SSHKey();
+            
+            //
+            // Extract key blob
+            //
+            
+            key.blob = decodeNetworkString(packet, offset);
+            offset += 4 + key.blob.length;
+            
+            //
+            // Extract comment
+            //
+            
+            byte[] comment = decodeNetworkString(packet, offset);
+            key.comment = new String(comment);
+            offset += 4 + comment.length;
+            
+            //
+            // Compute key fingerprint
+            //
+            
+            try {
+              key.fingerprint = new String(Hex.encode(sshKeyBlobFingerprint(key.blob)), "UTF-8");
+            } catch (UnsupportedEncodingException uee) {              
+            }
+
+            keys.add(key);
+          }
+          
+          return keys;
+        }
+      });
+      
+      return (List<SSHKey>) result;
+    }
+  }
   
   //
   // Shamir Secret Sharing Scheme
@@ -1948,14 +2323,18 @@ public class CryptoHelper {
    * @return
    */
   
-  public static byte[] SSSSRecover(List<byte[]> secrets) {
+  public static byte[] SSSSRecover(Collection<byte[]> secrets) {
     SSSS ss = new SSSS();
     
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     
     ByteArrayInputStream[] bais = new ByteArrayInputStream[secrets.size()];
-    for (int i = 0; i < secrets.size(); i++) {
-      bais[i] = new ByteArrayInputStream(secrets.get(i));
+    
+    int i = 0;
+    
+    for (byte[] secret: secrets) {
+      bais[i] = new ByteArrayInputStream(secret);
+      i++;
     }
    
     try {
@@ -1969,4 +2348,69 @@ public class CryptoHelper {
     return baos.toByteArray();
   }
 
+  //
+  // PGP Related code
+  //
+  
+  public static List<PGPPublicKey> PGPPublicKeysFromKeyRing(String keyring) throws IOException {
+    PGPObjectFactory factory = new PGPObjectFactory(PGPUtil.getDecoderStream(new ByteArrayInputStream(keyring.getBytes("UTF-8"))));
+    
+    List<PGPPublicKey> pubkeys = new ArrayList<PGPPublicKey>();
+
+    do {
+      Object o = factory.nextObject();
+    
+      if (null == o) {
+        break;
+      }
+      
+      if (o instanceof PGPKeyRing) {
+        PGPKeyRing ring = (PGPKeyRing) o;
+      
+        Iterator<PGPPublicKey> iter = ring.getPublicKeys();
+      
+        while(iter.hasNext()) {
+          PGPPublicKey key = iter.next();        
+          pubkeys.add(key);
+        }
+      }
+    } while (true);
+    
+    return pubkeys;
+  }
+  
+  public static byte[] encryptPGP(byte[] data, PGPPublicKey key, boolean armored, String name, int compressionAlgorithm, int encAlgorithm) throws IOException {
+    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    
+    OutputStream out = armored ? new ArmoredOutputStream(baos) : baos;
+  
+    BcPGPDataEncryptorBuilder dataEncryptor = new BcPGPDataEncryptorBuilder(encAlgorithm);
+    dataEncryptor.setWithIntegrityPacket(true);
+    dataEncryptor.setSecureRandom(CryptoHelper.getSecureRandom());
+    
+    PGPEncryptedDataGenerator encryptedDataGenerator = new PGPEncryptedDataGenerator(dataEncryptor);
+    encryptedDataGenerator.addMethod(new BcPublicKeyKeyEncryptionMethodGenerator(key));
+
+    try {
+      OutputStream encout = encryptedDataGenerator.open(out, 1024);          
+      
+      PGPCompressedDataGenerator pgpcdg = new PGPCompressedDataGenerator(compressionAlgorithm);
+      OutputStream compout = pgpcdg.open(encout);
+      
+      PGPLiteralDataGenerator pgpldg = new PGPLiteralDataGenerator(false);
+      OutputStream ldout = pgpldg.open(compout, PGPLiteralData.BINARY, name, data.length, PGPLiteralData.NOW);
+      
+      ldout.write(data);
+      ldout.close();
+      compout.close();
+      encout.close();
+      out.close();
+      baos.close();
+      
+      return baos.toByteArray();
+    } catch (PGPException pgpe) {
+      throw new IOException(pgpe);
+    }
+  }
+  
 }
