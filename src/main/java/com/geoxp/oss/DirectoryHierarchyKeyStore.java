@@ -28,7 +28,7 @@ public class DirectoryHierarchyKeyStore extends KeyStore {
   }
   
   @Override
-  public byte[] getSecret(String name, String fingerprint) {    
+  public byte[] getSecret(String name, String fingerprint) throws OSSException {    
     //
     // Sanitize name
     //
@@ -45,7 +45,7 @@ public class DirectoryHierarchyKeyStore extends KeyStore {
     //
     
     if (!secretFile.exists() || !secretFile.isFile() || !aclFile.exists() || !aclFile.isFile()) {
-      return null;
+      throw new OSSException("Missing secret or ACL file.");
     }
 
     //
@@ -82,11 +82,11 @@ public class DirectoryHierarchyKeyStore extends KeyStore {
       
       br.close();      
     } catch (IOException ioe) {
-      return null;
+      throw new OSSException(ioe);
     }
     
     if (!authorized) {
-      return null;
+      throw new OSSException("Access denied.");
     }
     
     //
@@ -112,14 +112,14 @@ public class DirectoryHierarchyKeyStore extends KeyStore {
       
       is.close();
     } catch (IOException ioe) {
-      return null;
+      throw new OSSException(ioe);
     }
     
     return baos.toByteArray();
   }
   
   @Override
-  public boolean putSecret(String name, byte[] secret) {
+  public void putSecret(String name, byte[] secret) throws OSSException {
     //
     // Sanitize name
     //
@@ -131,15 +131,19 @@ public class DirectoryHierarchyKeyStore extends KeyStore {
     File secretFile = new File(root.getAbsolutePath() + ".secret");
     
     if (secretFile.exists()) {
-      return false;
+      throw new OSSException("Secret '" + name + "' already exists.");
     }
-    
+        
     //
     // Create hierarchy
     //
     
-    if (!secretFile.getParentFile().mkdirs()) {
-      return false;
+    if (secretFile.getParentFile().exists() && !secretFile.getParentFile().isDirectory()) {
+      throw new OSSException("Secret path already exists and is not a directory.");
+    }
+    
+    if (!secretFile.getParentFile().exists() && !secretFile.getParentFile().mkdirs()) {
+      throw new OSSException("Unable to create path to secret file.");
     }
     
     try {
@@ -149,10 +153,8 @@ public class DirectoryHierarchyKeyStore extends KeyStore {
       os.close();
       
     } catch (IOException ioe) {
-      return false;
+      throw new OSSException(ioe);
     }
-    
-    return true;
   }  
   
   /**
