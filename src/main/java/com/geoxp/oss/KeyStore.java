@@ -5,17 +5,19 @@ public abstract class KeyStore {
    * Retrieve a secret
    * @param name Name of secret to retrieve
    * @param fingerprint SSH fingerprint of requesting key
-   * @return The requested secret or null if an error occurred
+   * @return The requested secret
+   * @throws OSSException if an error occurred
    */
-  public abstract byte[] getSecret(String name, String fingerprint);
+  public abstract byte[] getSecret(String name, String fingerprint) throws OSSException;
   
   /**
    * Store a secret in the keystore
    * 
    * @param name Name under which to store the secret
    * @param secret Secret to store.
+   * @throws OSSException if an error occurred
    */
-  public abstract boolean putSecret(String name, byte[] secret);
+  public abstract void putSecret(String name, byte[] secret) throws OSSException;
   
   /**
    * Sanitize secret name
