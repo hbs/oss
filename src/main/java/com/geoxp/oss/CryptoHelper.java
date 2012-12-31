@@ -218,7 +218,6 @@ public class CryptoHelper {
     try {
       return unpadPKCS7(aes.unwrap(data, 0, data.length));
     } catch (InvalidCipherTextException icte) {
-      icte.printStackTrace();
       return null;
     }
   }
