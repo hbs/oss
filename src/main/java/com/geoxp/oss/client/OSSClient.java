@@ -315,18 +315,25 @@ public class OSSClient {
       }
       
       //
-      // Extract sealed secret
+      // Extract encrypted secret and sealed key
       //
       
-      byte[] sealedsecret = Base64.decode(content);
+      byte[] secretandsealedkey = Base64.decode(content);
+      
+      byte[] encryptedsecret = CryptoHelper.decodeNetworkString(secretandsealedkey, 0);
+      byte[] sealedkey = CryptoHelper.decodeNetworkString(secretandsealedkey, 4 + encryptedsecret.length);
       
       //
-      // Unseal secret
+      // Unseal key
       //
       
-      byte[] secret = CryptoHelper.decryptRSA(rsapriv, sealedsecret);
+      byte[] wrappingkey = CryptoHelper.decryptRSA(rsapriv, sealedkey);
       
-      return secret;      
+      //
+      // Unwrap secret
+      //
+            
+      return CryptoHelper.unwrapAES(wrappingkey, encryptedsecret);      
     } catch (OSSException osse) {
       throw osse;
     } catch (Exception e) {

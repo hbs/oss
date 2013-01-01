@@ -1,5 +1,6 @@
 package com.geoxp.oss.servlet;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.security.PublicKey;
 
@@ -82,16 +83,28 @@ public class GetSecretServlet extends HttpServlet {
     }
     
     //
-    // Seal secret with provided RSA pub key
+    // Wrap secret with a temporary AES key
+    //
+    
+    byte[] wrappingkey = new byte[32];
+    CryptoHelper.getSecureRandom().nextBytes(wrappingkey);
+    
+    secret = CryptoHelper.wrapAES(wrappingkey, secret);
+        
+    //
+    // Seal wrapping key with provided RSA pub key
     //
     
     PublicKey rsapub = CryptoHelper.sshKeyBlobToPublicKey(rsapubblob);
+        
+    byte[] sealedwrappingkey = CryptoHelper.encryptRSA(rsapub, secret);
     
-    byte[] sealedsecret = CryptoHelper.encryptRSA(rsapub, secret);
+    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    baos.write(CryptoHelper.encodeNetworkString(secret));
+    baos.write(CryptoHelper.encodeNetworkString(sealedwrappingkey));
     
     resp.setStatus(HttpServletResponse.SC_OK);
     
-    resp.getWriter().println(new String(Base64.encode(sealedsecret), "UTF-8"));
-
+    resp.getWriter().println(new String(Base64.encode(baos.toByteArray()), "UTF-8"));
   }
 }
