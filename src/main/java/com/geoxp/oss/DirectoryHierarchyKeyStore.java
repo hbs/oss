@@ -29,93 +29,97 @@ public class DirectoryHierarchyKeyStore extends KeyStore {
   
   @Override
   public byte[] getSecret(String name, String fingerprint) throws OSSException {    
-    //
-    // Sanitize name
-    //
-    
-    name = sanitizeSecretName(name);
-    
-    File root = getSecretFile(name);
-    
-    File secretFile = new File(root.getAbsolutePath() + ".secret");
-    File aclFile = new File(root.getAbsolutePath() + ".acl");
-    
-    //
-    // Check if secret exists
-    //
-    
-    if (!secretFile.exists() || !secretFile.isFile() || !aclFile.exists() || !aclFile.isFile()) {
-      throw new OSSException("Missing secret or ACL file.");
-    }
-
-    //
-    // Check ACLs
-    //
-
-    // Sanitize fingerprint
-    
-    if (null == fingerprint) {
-      fingerprint = "";
-    }
-    
-    fingerprint = fingerprint.toLowerCase().replaceAll("[^0-9a-f]","");
-    
-    boolean authorized = false;
-    
     try {
-      BufferedReader br = new BufferedReader(new FileReader(aclFile));
+      //
+      // Sanitize name
+      //
       
-      while(true) {
-        String line = br.readLine();
-        
-        if (null == line) {
-          break;
-        }
-        
-        String acl = line.toLowerCase().replaceAll("[^0-9a-f#*]", "");
-        
-        if ("*".equals(acl) || fingerprint.equals(acl)) {
-          authorized = true;
-          break;
-        }
+      name = sanitizeSecretName(name);
+      
+      File root = getSecretFile(name);
+      
+      File secretFile = new File(root.getAbsolutePath() + ".secret");
+      File aclFile = getACLFile(name);
+      
+      //
+      // Check if secret exists
+      //
+      
+      if (!secretFile.exists() || !secretFile.isFile() || !aclFile.exists() || !aclFile.isFile()) {
+        throw new OSSException("Missing secret or ACL file.");
+      }
+
+      //
+      // Check ACLs
+      //
+
+      // Sanitize fingerprint
+      
+      if (null == fingerprint) {
+        fingerprint = "";
       }
       
-      br.close();      
-    } catch (IOException ioe) {
-      throw new OSSException(ioe);
-    }
-    
-    if (!authorized) {
-      throw new OSSException("Access denied.");
-    }
-    
-    //
-    // Read secret
-    //
-    
-    ByteArrayOutputStream baos = new ByteArrayOutputStream((int) secretFile.length());
-    
-    byte[] buf = new byte[1024];
-    
-    try {
-      InputStream is = new FileInputStream(secretFile);
-
-      do {
-        int len = is.read(buf);
+      fingerprint = fingerprint.toLowerCase().replaceAll("[^0-9a-f]","");
+      
+      boolean authorized = false;
+      
+      try {
+        BufferedReader br = new BufferedReader(new FileReader(aclFile));
         
-        if (-1 == len) {
-          break;
+        while(true) {
+          String line = br.readLine();
+          
+          if (null == line) {
+            break;
+          }
+          
+          String acl = line.toLowerCase().replaceAll("[^0-9a-f#*]", "");
+          
+          if ("*".equals(acl) || fingerprint.equals(acl)) {
+            authorized = true;
+            break;
+          }
         }
         
-        baos.write(buf, 0, len);
-      } while(true);
+        br.close();      
+      } catch (IOException ioe) {
+        throw new OSSException(ioe);
+      }
       
-      is.close();
+      if (!authorized) {
+        throw new OSSException("Access denied.");
+      }
+      
+      //
+      // Read secret
+      //
+      
+      ByteArrayOutputStream baos = new ByteArrayOutputStream((int) secretFile.length());
+      
+      byte[] buf = new byte[1024];
+      
+      try {
+        InputStream is = new FileInputStream(secretFile);
+
+        do {
+          int len = is.read(buf);
+          
+          if (-1 == len) {
+            break;
+          }
+          
+          baos.write(buf, 0, len);
+        } while(true);
+        
+        is.close();
+      } catch (IOException ioe) {
+        throw new OSSException(ioe);
+      }
+      
+      return baos.toByteArray();
     } catch (IOException ioe) {
       throw new OSSException(ioe);
     }
-    
-    return baos.toByteArray();
   }
   
   @Override
@@ -185,5 +189,27 @@ public class DirectoryHierarchyKeyStore extends KeyStore {
     }
 
     return f;
+  }
+  
+  /**
+   * Determine the ACL file to use for a given secret
+   * 
+   * @param name Name of secret
+   * @return File of ACLs or null if none is suitable
+   */
+  private File getACLFile(String name) throws IOException {
+    File path = getSecretFile(name);
+    
+    while (!path.equals(this.directory)) {
+      File acl = new File(path.getCanonicalPath() + ".acl");
+      
+      if (acl.exists() && acl.isFile()) {
+        return acl;
+      }
+      
+      path = path.getParentFile();
+    }
+    
+    return null;
   }
 }
