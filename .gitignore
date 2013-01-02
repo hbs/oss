@@ -11,3 +11,8 @@ bin
 #
 .gradle
 build
+
+#
+# JUDS build dir
+#
+juds
