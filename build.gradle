@@ -65,7 +65,6 @@ war {
 
   for (f in classpath) {
     if (!f.toString().endsWith('juds-0.94.jar')) {
-      println f
       project.ext['clspth'].add(f)
     }
   }
