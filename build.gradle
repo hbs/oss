@@ -3,9 +3,47 @@ apply plugin: 'eclipse'
 apply plugin: 'war'
 apply plugin: 'jetty'
 
+//
+// Dependency on gradle-git to download juds to download juds
+// @see https://github.com/ajoberstar/gradle-git
+//
+
+buildscript {
+  repositories { mavenCentral() }
+  dependencies { classpath 'org.ajoberstar:gradle-git:0.2.3' }
+}
+
+import org.ajoberstar.gradle.git.tasks.*;
+
+task clonejuds(type: GitClone) {
+  def destination = file('juds')
+  uri = 'https://github.com/mcfunley/juds.git'
+  destinationPath = destination
+  bare = false
+  enabled = !destination.exists() //to clone only once
+}
+
+task confjuds(type: Exec, dependsOn: 'clonejuds') {
+  workingDir './juds'
+  commandLine './configure','CFLAGS=-I' + System.getProperty('java.home') + '/include'
+}
+
+task buildjuds(type: Exec, dependsOn: 'confjuds') {
+  workingDir './juds'
+  commandLine 'make'
+}
+
+//
+// Repositories for dependency resolution
+//
+
 repositories {
   mavenCentral()
 }
+
+//
+// Project dependencies
+//
 
 dependencies {
   compile group: 'org.bouncycastle', name: 'bcprov-jdk15on', version: '1.47'
@@ -17,9 +55,21 @@ dependencies {
   compile group: 'org.apache.httpcomponents', name: 'httpcore', version: '4.2.2'
   compile group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.2.2'
   
-  compile files('lib/juds-0.94.jar')
+  compile files('juds/juds-0.94.jar')
   
   testCompile group: 'junit', name: 'junit', version: '4.+'
+}
+
+war {
+  project.ext['clspth'] = []
+
+  for (f in classpath) {
+    if (!f.toString().endsWith('juds-0.94.jar')) {
+      println f
+      project.ext['clspth'].add(f)
+    }
+  }
+  classpath = project.ext['clspth']
 }
 
 test {
