@@ -97,7 +97,7 @@ public class GetSecretServlet extends HttpServlet {
     
     PublicKey rsapub = CryptoHelper.sshKeyBlobToPublicKey(rsapubblob);
         
-    byte[] sealedwrappingkey = CryptoHelper.encryptRSA(rsapub, secret);
+    byte[] sealedwrappingkey = CryptoHelper.encryptRSA(rsapub, wrappingkey);
     
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     baos.write(CryptoHelper.encodeNetworkString(secret));
