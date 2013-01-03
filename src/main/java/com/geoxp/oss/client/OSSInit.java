@@ -25,5 +25,7 @@ public class OSSInit {
     }
 
     OSSClient.init(args[0], args[1]);    
+
+    System.out.println("Open Secret Server initialized successfully");
   }
 }
