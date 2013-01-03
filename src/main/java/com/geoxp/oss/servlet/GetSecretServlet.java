@@ -38,6 +38,12 @@ import com.google.inject.Singleton;
 public class GetSecretServlet extends HttpServlet {
   @Override
   protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+
+    if (!OSS.isInitialized()) {
+      resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Open Secret Server not yet initialized.");
+      return;
+    }
+
     //
     // Extract token
     //
