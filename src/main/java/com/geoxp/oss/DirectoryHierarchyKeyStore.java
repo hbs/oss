@@ -61,7 +61,7 @@ public class DirectoryHierarchyKeyStore extends KeyStore {
       // Check if secret exists
       //
       
-      if (!secretFile.exists() || !secretFile.isFile() || !aclFile.exists() || !aclFile.isFile()) {
+      if (!secretFile.exists() || !secretFile.isFile() || null == aclFile || !aclFile.exists() || !aclFile.isFile()) {
         throw new OSSException("Missing secret or ACL file.");
       }
 
@@ -183,7 +183,7 @@ public class DirectoryHierarchyKeyStore extends KeyStore {
    * @param name
    * @return
    */
-  private File getSecretFile(String name) {
+  private File getSecretFile(String name) throws OSSException {
     //
     // Sanitize name
     //
@@ -213,7 +213,7 @@ public class DirectoryHierarchyKeyStore extends KeyStore {
    * @param name Name of secret
    * @return File of ACLs or null if none is suitable
    */
-  private File getACLFile(String name) throws IOException {
+  private File getACLFile(String name) throws IOException, OSSException {
     File path = getSecretFile(name);
     
     while (!path.equals(this.directory)) {
