@@ -19,12 +19,19 @@ package com.geoxp.oss.servlet;
 import com.google.inject.servlet.ServletModule;
 
 public class GuiceServletModule extends ServletModule {
+  
+  public static final String SERVLET_PATH_GEN_MASTER_SECRET = "/GenMasterSecret";
+  public static final String SERVLET_PATH_INIT = "/Init";
+  public static final String SERVLET_PATH_GET_SECRET = "/GetSecret";
+  public static final String SERVLET_PATH_GEN_SECRET = "/GenSecret";
+  public static final String SERVLET_PATH_GET_OSS_RSA = "/GetOSSRSA";
+  
   @Override
   protected void configureServlets() {
-    serve("/GenMasterSecret").with(GenMasterSecretServlet.class);
-    serve("/Init").with(InitServlet.class);
-    serve("/GetSecret").with(GetSecretServlet.class);
-    serve("/GenSecret").with(GenSecretServlet.class);
-    serve("/GetOSSRSA").with(GetOSSRSAServlet.class);
+    serve(SERVLET_PATH_GEN_MASTER_SECRET).with(GenMasterSecretServlet.class);
+    serve(SERVLET_PATH_INIT).with(InitServlet.class);
+    serve(SERVLET_PATH_GET_SECRET).with(GetSecretServlet.class);
+    serve(SERVLET_PATH_GEN_SECRET).with(GenSecretServlet.class);
+    serve(SERVLET_PATH_GET_OSS_RSA).with(GetOSSRSAServlet.class);
   }
 }
