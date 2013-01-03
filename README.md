@@ -17,4 +17,30 @@ This wrapping key needs to be sent to the OSS upon startup.
 
 
 
-More doc to be written .... in 2013 ;-)
+
+Make sure your SSH agent is running and has private keys added to it.
+
+Those private keys MUST have privileges in order to access OSSInit / OSSGenSecret / OSSGetSecret, see web.xml
+
+1. GenMasterSecret
+
+gpg -export -a > pubring
+gradle -Doss.url=http://127.0.0.1:8080/oss -Doss.pubring=./pubring -Doss.keyid=XXXXXXXX,YYYYYYYY,ZZZZZZZZ -Doss.k=2 OSSGenMasterSecret
+
+XXXXXXXX.oss
+YYYYYYYY.oss
+ZZZZZZZZ.oss
+
+2. Init
+
+gpg -d XXXXXXXX.oss | gradle -Doss.url=http://127.0.0.1:8080/oss OSSInit
+gpg -d YYYYYYYY.oss | gradle -Doss.url=http://127.0.0.1:8080/oss OSSInit
+... (depends on value of oss.k at step 1)
+
+3. GenSecret
+
+gradle -Doss.url=http://127.0.0.1:8080/oss -Doss.secret=SECRET_NAME OSSGenSecret
+
+4. GetSecret
+
+gradle -Doss.url=http://127.0.0.1:8080/oss -Doss.secret=SECRET_NAME OSSGetSecret
