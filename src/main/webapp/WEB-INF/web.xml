@@ -5,6 +5,7 @@
 
 <web-app>
   
+  <--! The following context params can be overridden by system properties with the same name -->
   <context-param>    
    <description>Number of milliseconds a token is considered valid</description>
    <param-name>oss.token.ttl</param-name>
@@ -14,13 +15,13 @@
   <context-param>    
    <description>Comma separated list of SSH key fingerprints that can generate secrets</description>
    <param-name>oss.gensecret.sshkeys</param-name>
-   <param-value>fd:c3:7a:e9:ce:43:ee:ac:5e:07:64:8e:32:5c:8a:13</param-value>
+   <param-value>fd:c3:7a:......:5c:8a:13</param-value>
   </context-param>   
 
   <context-param>    
    <description>Comma separated list of SSH key fingerprints that can initialize the Open Secret Server</description>
    <param-name>oss.init.sshkeys</param-name>
-   <param-value>46:94:d7:53:ad:27:4c:18:d2:a2: 86:f1:a3:26:d9:ac</param-value>
+   <param-value>46:94:d7:......:26:d9:ac</param-value>
   </context-param>
      
   <context-param>    
