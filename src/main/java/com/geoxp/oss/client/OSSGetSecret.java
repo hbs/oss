@@ -23,11 +23,12 @@ import com.geoxp.oss.OSSException;
 public class OSSGetSecret {
   
   public static void main(String[] args) throws Exception {
-    if (3 != args.length) { 
-      throw new OSSException("Usage: OSSGetSecret OSS_GET_SECRET_URL SECRET_NAME SSH_SIGNING_KEY_FINGERPRINT");
+    if (args.length < 2) { 
+      throw new OSSException("Usage: OSSGetSecret OSS_GET_SECRET_URL SECRET_NAME [SSH_SIGNING_KEY_FINGERPRINT]");
     }
 
-    byte[] secret = OSSClient.getSecret(args[0], args[1], args[2]);
+    String sshkey = args.length > 2 ? ("".equals(args[2]) ? null : args[2]) : null;
+    byte[] secret = OSSClient.getSecret(args[0], args[1], sshkey);
     
     System.out.println("Secret = " + new String(Hex.encode(secret)));
   }
