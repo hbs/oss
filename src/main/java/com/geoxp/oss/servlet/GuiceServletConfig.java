@@ -29,13 +29,20 @@ public class GuiceServletConfig extends GuiceServletContextListener {
   public void contextInitialized(ServletContextEvent servletContextEvent) {
     
     //
-    // Read context parameters
+    // Read parameters, from system properties then as a fall back from context parameters
     //
     
-    OSS.setMaxTokenAge(servletContextEvent.getServletContext().getInitParameter(OSS.CONTEXT_PARAM_OSS_TOKEN_TTL));
-    OSS.setGenSecretSSHKeys(servletContextEvent.getServletContext().getInitParameter(OSS.CONTEXT_PARAM_OSS_GENSECRET_SSHKEYS));
-    OSS.setInitSSHKeys(servletContextEvent.getServletContext().getInitParameter(OSS.CONTEXT_PARAM_OSS_INIT_SSHKEYS));
-    OSS.setKeyStoreDirectory(servletContextEvent.getServletContext().getInitParameter(OSS.CONTEXT_PARAM_OSS_KEYSTORE_DIR));
+    String maxtokenage = System.getProperty(OSS.CONTEXT_PARAM_OSS_TOKEN_TTL);
+    OSS.setMaxTokenAge(null != maxtokenage ? maxtokenage : servletContextEvent.getServletContext().getInitParameter(OSS.CONTEXT_PARAM_OSS_TOKEN_TTL));
+
+    String gensecretsshkeys = System.getProperty(OSS.CONTEXT_PARAM_OSS_GENSECRET_SSHKEYS);
+    OSS.setGenSecretSSHKeys(null != gensecretsshkeys ? gensecretsshkeys : servletContextEvent.getServletContext().getInitParameter(OSS.CONTEXT_PARAM_OSS_GENSECRET_SSHKEYS));
+
+    String initsshkeys = System.getProperty(OSS.CONTEXT_PARAM_OSS_INIT_SSHKEYS);
+    OSS.setInitSSHKeys(null != initsshkeys ? initsshkeys : servletContextEvent.getServletContext().getInitParameter(OSS.CONTEXT_PARAM_OSS_INIT_SSHKEYS));
+
+    String keystoredir = System.getProperty(OSS.CONTEXT_PARAM_OSS_KEYSTORE_DIR);
+    OSS.setKeyStoreDirectory(null != keystoredir ? keystoredir : servletContextEvent.getServletContext().getInitParameter(OSS.CONTEXT_PARAM_OSS_KEYSTORE_DIR));
     
     super.contextInitialized(servletContextEvent);
   }
