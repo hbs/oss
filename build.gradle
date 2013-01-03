@@ -25,12 +25,20 @@ task clonejuds(type: GitClone) {
 
 task confjuds(type: Exec, dependsOn: 'clonejuds') {
   workingDir './juds'
-  commandLine './configure','CFLAGS=-I' + System.getProperty('java.home') + '/include'
+  if (!new File('./juds/juds-0.94.jar').exists()) {
+    commandLine './configure','CFLAGS=-I' + System.getProperty('java.home') + '/include'
+  } else {
+    commandLine 'ls', 'juds-0.94.jar'
+  }
 }
 
 task buildjuds(type: Exec, dependsOn: 'confjuds') {
   workingDir './juds'
-  commandLine 'make'
+  if (!new File('./juds/juds-0.94.jar').exists()) {
+    commandLine 'make'
+  } else {
+    commandLine 'ls', 'juds-0.94.jar'
+  }
 }
 
 //
@@ -61,14 +69,14 @@ dependencies {
 }
 
 war {
-  project.ext['clspth'] = []
+  ext.clspth = []
 
   for (f in classpath) {
     if (!f.toString().endsWith('juds-0.94.jar')) {
-      project.ext['clspth'].add(f)
+      ext.clspth.add(f)
     }
   }
-  classpath = project.ext['clspth']
+  classpath = ext.clspth
 }
 
 test {
@@ -84,4 +92,72 @@ test {
   onOutput { descriptor, event ->
      logger.lifecycle("Test: " + descriptor + " produced standard out/err: " + event.message )
   }
+}
+
+build.dependsOn {
+  'buildjuds'
+}
+
+//
+// Handly tasks to interact with an OSS
+//
+
+task(OSSGenMasterSecret, dependsOn: 'build', type: JavaExec) {
+  doFirst {
+    ext.props = ['oss.url', 'oss.pubring', 'oss.keyid', 'oss.k']
+    for (prop in ext.props) {
+      if (null == System.getProperty(prop)) {
+        throw new RuntimeException('Usage: gradle -Doss.url=OSS_GEN_MASTER_URL -Doss.pubring=PUBRING0,PUBRING1,... -Doss.keyid=KEYID0,KEYID1,... -Doss.k=K OSSGenMasterSecret')
+      }
+    }
+  }
+  main = 'com.geoxp.oss.client.OSSGenMasterSecret'
+  classpath = sourceSets.main.runtimeClasspath
+  args System.getProperty('oss.url'), System.getProperty('oss.pubring'), System.getProperty('oss.keyid'), System.getProperty('oss.k')
+}
+
+task(OSSInit, dependsOn: 'build') {
+  doFirst { 
+    ext.props = ['oss.url', 'oss.sshkey']
+    for (prop in ext.props) {
+      if (null == System.getProperty(prop)) {
+        throw new RuntimeException('Usage: gradle -Doss.url=OSS_INIT_URL -Doss.sshkey=SSH_KEY_FINGERPRINT OSSInit\nPassing the raw init secret via stdin.')
+      }
+    }
+    ext.cp = ''
+    for(f in sourceSets.main.runtimeClasspath) {
+      ext.cp = ext.cp + ':' + f
+    }
+    println 'To initialize OSS run the following command:'
+    println ''
+    println 'gpg -d XXXXXXXX.oss | java -classpath ' + ext.cp + ' com.geoxp.oss.OSSInit ' + System.getProperty('oss.url') + ' ' + System.getProperty('oss.sshkey')
+  }
+}
+
+task(OSSGenSecret, dependsOn: 'build', type: JavaExec) {
+  doFirst { 
+    ext.props = ['oss.url', 'oss.secret', 'oss.sshkey']
+    for (prop in ext.props) {
+      if (null == System.getProperty(prop)) {
+        throw new RuntimeException('Usage: gradle -Doss.url=OSS_GEN_SECRET_URL -Doss.secret=SECRET_NAME -Doss.sshkey=SSH_KEY_FINGERPRINT OSSGenSecret')
+      }
+    }
+  }
+  main = 'com.geoxp.oss.client.OSSGenSecret'
+  classpath = sourceSets.main.runtimeClasspath
+  args System.getProperty('oss.url'), System.getProperty('oss.secret'), System.getProperty('oss.sshkey')
+}
+
+task(OSSGetSecret, dependsOn: 'build', type: JavaExec) {
+  doFirst { 
+    ext.props = ['oss.url', 'oss.secret']
+    for (prop in ext.props) {
+      if (null == System.getProperty(prop)) {
+        throw new RuntimeException('Usage: gradle -Doss.url=OSS_GET_SECRET_URL -Doss.secret=SECRET_NAME [-Doss.sshkey=SSH_KEY_FINGERPRINT] OSSGetSecret')
+      }
+    }
+  }
+  main = 'com.geoxp.oss.client.OSSGetSecret'
+  classpath = sourceSets.main.runtimeClasspath
+  args System.getProperty('oss.url'), System.getProperty('oss.secret'), null != System.getProperty('oss.sshkey') ? System.getProperty('oss.sshkey') : ''
 }
