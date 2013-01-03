@@ -40,12 +40,19 @@ public abstract class KeyStore {
    * 
    * @param name Name to sanitize
    * @return The sanitized name
+   * @throws OSSException if secret name is invalid
    */
-  public static String sanitizeSecretName(String name) {
-    if (null == name) {
+  public static String sanitizeSecretName(String name) throws OSSException {
+    if (null == name || "".equals(name)) {
       return name;
     }
     
-    return name.toLowerCase().replaceAll("[^a-z0-9.-]", "");
+    String sanitized = name.toLowerCase().replaceAll("[^a-z0-9.-]", "");
+
+    if (!name.equals(sanitized)) {
+      throw new OSSException("Secret name can only contain characters 'a' to 'z', '0' to '9', '-' and '.'");
+    }
+
+    return sanitized;
   }
 }
