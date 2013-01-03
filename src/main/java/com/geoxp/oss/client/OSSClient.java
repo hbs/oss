@@ -21,6 +21,7 @@ import java.math.BigInteger;
 import java.net.URI;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -86,6 +87,10 @@ public class OSSClient {
       String content = EntityUtils.toString(resEntity, "UTF-8");
 
       post.reset();
+      
+      if (HttpServletResponse.SC_OK != response.getStatusLine().getStatusCode()) {
+        throw new OSSException(response.getStatusLine().getReasonPhrase());
+      }
       
       JsonParser parser = new JsonParser();
       JsonElement elt = parser.parse(content);
@@ -212,144 +217,172 @@ public class OSSClient {
     SSHAgentClient agent = null;
     
     try {
-      //
-      // Check if the signing key is available in the agent
-      //
-      
-      String fingerprint = sshKeyFingerprint.toLowerCase().replaceAll("[^0-9a-f]", "");
-      
       agent = new SSHAgentClient();
-      
+
       List<SSHKey> sshkeys = agent.requestIdentities();
-      
-      byte[] keyblob = null;
-      
-      for (SSHKey key: sshkeys) {
-        if (key.fingerprint.equals(fingerprint)) {
-          keyblob = key.blob;
-          break;
+
+      //
+      // If no SSH Key fingerprint was provided, try all SSH keys available in the agent
+      //
+
+      List<String> fingerprints = new ArrayList<String>();
+
+      if (null == sshKeyFingerprint) {
+        for (SSHKey key: sshkeys) {
+          fingerprints.add(key.fingerprint);
         }
-      }
-      
-      if (null == keyblob) {
-        throw new OSSException("SSH Key " + sshKeyFingerprint + " was not found by your SSH agent.");
+      } else {
+        fingerprints.add(sshKeyFingerprint.toLowerCase().replaceAll("[^0-9a-f]", ""));
       }
 
-      //
-      // Generate temporary RSA key pair
-      //
-      
-      RSAKeyPairGenerator rsagen = new RSAKeyPairGenerator();
-      RSAKeyGenerationParameters params = new RSAKeyGenerationParameters(new BigInteger("65537"), CryptoHelper.getSecureRandom(), 2048, 64);
-      rsagen.init(params);
-      final AsymmetricCipherKeyPair keypair = rsagen.generateKeyPair();
-      
-      RSAPrivateKey rsapriv = new RSAPrivateKey() {
-        public BigInteger getModulus() { return ((RSAKeyParameters) keypair.getPrivate()).getModulus(); }
-        public String getFormat() { return "PKCS#8"; }
-        public byte[] getEncoded() { return null; }
-        public String getAlgorithm() { return "RSA"; }
-        public BigInteger getPrivateExponent() { return ((RSAKeyParameters) keypair.getPrivate()).getExponent(); }
-      };
+      int idx = 0;
 
-      RSAPublicKey rsapub = new RSAPublicKey() {
-        public BigInteger getModulus() { return ((RSAKeyParameters) keypair.getPublic()).getModulus(); }
-        public String getFormat() { return "PKCS#8"; }
-        public byte[] getEncoded() { return null; }
-        public String getAlgorithm() { return "RSA"; }
-        public BigInteger getPublicExponent() { return ((RSAKeyParameters) keypair.getPublic()).getExponent(); }      
-      };
+      for (String fingerprint: fingerprints) {
+        idx++;
 
-      //
-      // Build OSS Token
-      //
-      // <TS> <<SECRET_NAME> <RSA_ENC_KEY>> <SSH Signing Key Blob> <SSH Signature Blob>
-      //
+        //
+        // Check if the signing key is available in the agent
+        //
       
-      ByteArrayOutputStream token = new ByteArrayOutputStream();
+        byte[] keyblob = null;
       
-      byte[] tsdata = new byte[8];
-      long ts = System.currentTimeMillis();
+        for (SSHKey key: sshkeys) {
+          if (key.fingerprint.equals(fingerprint)) {
+            keyblob = key.blob;
+            break;
+          }
+        }
       
-      tsdata[0] = (byte) ((ts >> 56) & 0xff);
-      tsdata[1] = (byte) ((ts >> 48) & 0xff);
-      tsdata[2] = (byte) ((ts >> 40) & 0xff);
-      tsdata[3] = (byte) ((ts >> 32) & 0xff);
-      tsdata[4] = (byte) ((ts >> 24) & 0xff);
-      tsdata[5] = (byte) ((ts >> 16) & 0xff);
-      tsdata[6] = (byte) ((ts >> 8) & 0xff);
-      tsdata[7] = (byte) (ts & 0xff);
-      
-      token.write(CryptoHelper.encodeNetworkString(tsdata));
+        //
+        // Throw an exception if this condition is encountered as it can only happen if
+        // there was a provided fingerprint which is not in the agent.
+        //
 
-      ByteArrayOutputStream subtoken = new ByteArrayOutputStream();
+        if (null == keyblob) {
+          throw new OSSException("SSH Key " + sshKeyFingerprint + " was not found by your SSH agent.");
+        }
+
+        //
+        // Generate temporary RSA key pair
+        //
       
-      subtoken.write(CryptoHelper.encodeNetworkString(secretName.getBytes("UTF-8")));
-      subtoken.write(CryptoHelper.encodeNetworkString(CryptoHelper.sshKeyBlobFromPublicKey(rsapub)));
+        RSAKeyPairGenerator rsagen = new RSAKeyPairGenerator();
+        RSAKeyGenerationParameters params = new RSAKeyGenerationParameters(new BigInteger("65537"), CryptoHelper.getSecureRandom(), 2048, 64);
+        rsagen.init(params);
+        final AsymmetricCipherKeyPair keypair = rsagen.generateKeyPair();
       
-      token.write(CryptoHelper.encodeNetworkString(subtoken.toByteArray()));
+        RSAPrivateKey rsapriv = new RSAPrivateKey() {
+          public BigInteger getModulus() { return ((RSAKeyParameters) keypair.getPrivate()).getModulus(); }
+          public String getFormat() { return "PKCS#8"; }
+          public byte[] getEncoded() { return null; }
+          public String getAlgorithm() { return "RSA"; }
+          public BigInteger getPrivateExponent() { return ((RSAKeyParameters) keypair.getPrivate()).getExponent(); }
+        };
+
+        RSAPublicKey rsapub = new RSAPublicKey() {
+          public BigInteger getModulus() { return ((RSAKeyParameters) keypair.getPublic()).getModulus(); }
+          public String getFormat() { return "PKCS#8"; }
+          public byte[] getEncoded() { return null; }
+          public String getAlgorithm() { return "RSA"; }
+          public BigInteger getPublicExponent() { return ((RSAKeyParameters) keypair.getPublic()).getExponent(); }      
+        };
+
+        //
+        // Build OSS Token
+        //
+        // <TS> <<SECRET_NAME> <RSA_ENC_KEY>> <SSH Signing Key Blob> <SSH Signature Blob>
+        //
       
-      token.write(CryptoHelper.encodeNetworkString(keyblob));
+        ByteArrayOutputStream token = new ByteArrayOutputStream();
       
-      //
-      // Generate signature
-      //
+        byte[] tsdata = new byte[8];
+        long ts = System.currentTimeMillis();
       
-      byte[] sigblob = agent.sign(keyblob, token.toByteArray());
+        tsdata[0] = (byte) ((ts >> 56) & 0xff);
+        tsdata[1] = (byte) ((ts >> 48) & 0xff);
+        tsdata[2] = (byte) ((ts >> 40) & 0xff);
+        tsdata[3] = (byte) ((ts >> 32) & 0xff);
+        tsdata[4] = (byte) ((ts >> 24) & 0xff);
+        tsdata[5] = (byte) ((ts >> 16) & 0xff);
+        tsdata[6] = (byte) ((ts >> 8) & 0xff);
+        tsdata[7] = (byte) (ts & 0xff);
       
-      token.write(CryptoHelper.encodeNetworkString(sigblob));
+        token.write(CryptoHelper.encodeNetworkString(tsdata));
+
+        ByteArrayOutputStream subtoken = new ByteArrayOutputStream();
       
-      String b64token = new String(Base64.encode(token.toByteArray()), "UTF-8");
+        subtoken.write(CryptoHelper.encodeNetworkString(secretName.getBytes("UTF-8")));
+        subtoken.write(CryptoHelper.encodeNetworkString(CryptoHelper.sshKeyBlobFromPublicKey(rsapub)));
       
-      //
-      // Send request
-      //
+        token.write(CryptoHelper.encodeNetworkString(subtoken.toByteArray()));
       
-      HttpClient httpclient = new DefaultHttpClient();
+        token.write(CryptoHelper.encodeNetworkString(keyblob));
       
-      URIBuilder builder = new URIBuilder(ossGetSecretURL);
+        //
+        // Generate signature
+        //
       
-      builder.addParameter("token", b64token);
+        byte[] sigblob = agent.sign(keyblob, token.toByteArray());
       
-      URI uri = builder.build();
+        token.write(CryptoHelper.encodeNetworkString(sigblob));
       
-      String qs = uri.getRawQuery();
+        String b64token = new String(Base64.encode(token.toByteArray()), "UTF-8");
       
-      HttpPost post = new HttpPost(uri.getScheme() + "://" + uri.getHost() + ":" + uri.getPort() + uri.getPath());
+        //
+        // Send request
+        //
       
-      post.setHeader("Content-Type", "application/x-www-form-urlencoded");
+        HttpClient httpclient = new DefaultHttpClient();
       
-      post.setEntity(new StringEntity(qs));
+        URIBuilder builder = new URIBuilder(ossGetSecretURL);
       
-      HttpResponse response = httpclient.execute(post);
-      HttpEntity resEntity = response.getEntity();
-      String content = EntityUtils.toString(resEntity, "UTF-8");
-      post.reset();
+        builder.addParameter("token", b64token);
       
-      if (HttpServletResponse.SC_OK != response.getStatusLine().getStatusCode()) {
-        throw new OSSException(response.getStatusLine().getReasonPhrase());
-      }
+        URI uri = builder.build();
       
-      //
-      // Extract encrypted secret and sealed key
-      //
+        String qs = uri.getRawQuery();
       
-      byte[] secretandsealedkey = Base64.decode(content);
+        HttpPost post = new HttpPost(uri.getScheme() + "://" + uri.getHost() + ":" + uri.getPort() + uri.getPath());
       
-      byte[] encryptedsecret = CryptoHelper.decodeNetworkString(secretandsealedkey, 0);
-      byte[] sealedkey = CryptoHelper.decodeNetworkString(secretandsealedkey, 4 + encryptedsecret.length);
+        post.setHeader("Content-Type", "application/x-www-form-urlencoded");
       
-      //
-      // Unseal key
-      //
+        post.setEntity(new StringEntity(qs));
       
-      byte[] wrappingkey = CryptoHelper.decryptRSA(rsapriv, sealedkey);
+        HttpResponse response = httpclient.execute(post);
+        HttpEntity resEntity = response.getEntity();
+        String content = EntityUtils.toString(resEntity, "UTF-8");
+        post.reset();
       
-      //
-      // Unwrap secret
-      //
+        if (HttpServletResponse.SC_OK != response.getStatusLine().getStatusCode()) {
+          // Only throw an exception if this is the last SSH key we could try
+          if (idx == fingerprints.size()) {
+            throw new OSSException("None of the provided keys (" + idx + ") could be used to retrieve secret. Latest error message was: " + response.getStatusLine().getReasonPhrase());
+          } else {
+            continue;
+          }
+        }
+      
+        //
+        // Extract encrypted secret and sealed key
+        //
+      
+        byte[] secretandsealedkey = Base64.decode(content);
+      
+        byte[] encryptedsecret = CryptoHelper.decodeNetworkString(secretandsealedkey, 0);
+        byte[] sealedkey = CryptoHelper.decodeNetworkString(secretandsealedkey, 4 + encryptedsecret.length);
+      
+        //
+        // Unseal key
+        //
+      
+        byte[] wrappingkey = CryptoHelper.decryptRSA(rsapriv, sealedkey);
+      
+        //
+        // Unwrap secret
+        //
             
-      return CryptoHelper.unwrapAES(wrappingkey, encryptedsecret);      
+        return CryptoHelper.unwrapAES(wrappingkey, encryptedsecret);      
+      }
     } catch (OSSException osse) {
       throw osse;
     } catch (Exception e) {
@@ -359,6 +392,8 @@ public class OSSClient {
         agent.close();
       }
     }
+
+    return null;
   }
   
   public static void init(String ossInitURL, String sshKeyFingerprint) throws OSSException {
