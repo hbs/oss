@@ -16,16 +16,23 @@
 
 package com.geoxp.oss.client;
 
+import com.geoxp.oss.OSS;
+
 public class OSSInit {
   public static void main(String[] args) throws Exception {
     
-    if (2 != args.length) {
-      System.err.println("OSSInit OSS_INIT_URL SSH_SIGNING_KEY_FINGERPRINT");
+    if (args.length < 1) {
+      System.err.println("OSSInit OSS_INIT_URL [SSH_SIGNING_KEY_FINGERPRINT]");
       System.exit(1);
     }
 
-    OSSClient.init(args[0], args[1]);    
+    String sshkey = args.length > 2 ? ("".equals(args[1]) ? null : args[1]) : null;
+    boolean initialized = OSSClient.init(args[0], sshkey);    
 
-    System.out.println("Open Secret Server initialized successfully");
+    if (initialized) {
+      System.out.println("Open Secret Server initialized successfully");
+    } else {
+      System.out.println("Open Secret Server not yet initialized, needs more secrets.");
+    }
   }
 }

@@ -19,11 +19,11 @@ package com.geoxp.oss.client;
 
 public class OSSGenSecret {
   public static void main(String[] args) throws Exception {
-    if (3 != args.length) { 
-      System.err.println("Usage: OSSGenSecret OSS_GEN_SECRET_URL SECRET_NAME SSH_SIGNING_KEY_FINGERPRINT");
+    if (args.length < 2) { 
+      System.err.println("Usage: OSSGenSecret OSS_GEN_SECRET_URL SECRET_NAME [SSH_SIGNING_KEY_FINGERPRINT]");
     }
     
-    OSSClient.genSecret(args[0], args[1], args[2]);
-    
+    String sshkey = args.length > 2 ? ("".equals(args[2]) ? null : args[2]) : null;
+    OSSClient.genSecret(args[0], args[1], sshkey);    
   }
 }
