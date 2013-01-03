@@ -107,7 +107,7 @@ task(OSSGenMasterSecret, dependsOn: 'build', type: JavaExec) {
     ext.props = ['oss.url', 'oss.pubring', 'oss.keyid', 'oss.k']
     for (prop in ext.props) {
       if (null == System.getProperty(prop)) {
-        throw new RuntimeException('Usage: gradle -Doss.url=OSS_GEN_MASTER_URL -Doss.pubring=PUBRING0,PUBRING1,... -Doss.keyid=KEYID0,KEYID1,... -Doss.k=K OSSGenMasterSecret')
+        throw new RuntimeException('Usage: gradle -Doss.url=OSS_URL -Doss.pubring=PUBRING0,PUBRING1,... -Doss.keyid=KEYID0,KEYID1,... -Doss.k=K OSSGenMasterSecret')
       }
     }
   }
@@ -121,7 +121,7 @@ task(OSSInit, dependsOn: 'build') {
     ext.props = ['oss.url', 'oss.sshkey']
     for (prop in ext.props) {
       if (null == System.getProperty(prop)) {
-        throw new RuntimeException('Usage: gradle -Doss.url=OSS_INIT_URL -Doss.sshkey=SSH_KEY_FINGERPRINT OSSInit\nPassing the raw init secret via stdin.')
+        throw new RuntimeException('Usage: gradle -Doss.url=OSS_URL -Doss.sshkey=SSH_KEY_FINGERPRINT OSSInit\nPassing the raw init secret via stdin.')
       }
     }
     ext.cp = ''
@@ -139,7 +139,7 @@ task(OSSGenSecret, dependsOn: 'build', type: JavaExec) {
     ext.props = ['oss.url', 'oss.secret', 'oss.sshkey']
     for (prop in ext.props) {
       if (null == System.getProperty(prop)) {
-        throw new RuntimeException('Usage: gradle -Doss.url=OSS_GEN_SECRET_URL -Doss.secret=SECRET_NAME -Doss.sshkey=SSH_KEY_FINGERPRINT OSSGenSecret')
+        throw new RuntimeException('Usage: gradle -Doss.url=OSS_URL -Doss.secret=SECRET_NAME -Doss.sshkey=SSH_KEY_FINGERPRINT OSSGenSecret')
       }
     }
   }
@@ -153,7 +153,7 @@ task(OSSGetSecret, dependsOn: 'build', type: JavaExec) {
     ext.props = ['oss.url', 'oss.secret']
     for (prop in ext.props) {
       if (null == System.getProperty(prop)) {
-        throw new RuntimeException('Usage: gradle -Doss.url=OSS_GET_SECRET_URL -Doss.secret=SECRET_NAME [-Doss.sshkey=SSH_KEY_FINGERPRINT] OSSGetSecret')
+        throw new RuntimeException('Usage: gradle -Doss.url=OSS_URL -Doss.secret=SECRET_NAME [-Doss.sshkey=SSH_KEY_FINGERPRINT] OSSGetSecret')
       }
     }
   }
