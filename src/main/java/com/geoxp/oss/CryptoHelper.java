@@ -54,10 +54,14 @@ import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 
 import org.bouncycastle.bcpg.ArmoredOutputStream;
+import org.bouncycastle.crypto.AsymmetricBlockCipher;
 import org.bouncycastle.crypto.InvalidCipherTextException;
+import org.bouncycastle.crypto.encodings.PKCS1Encoding;
 import org.bouncycastle.crypto.engines.AESWrapEngine;
+import org.bouncycastle.crypto.engines.RSABlindedEngine;
 import org.bouncycastle.crypto.paddings.PKCS7Padding;
 import org.bouncycastle.crypto.params.KeyParameter;
+import org.bouncycastle.crypto.params.RSAKeyParameters;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.openpgp.PGPCompressedDataGenerator;
 import org.bouncycastle.openpgp.PGPEncryptedDataGenerator;
@@ -250,12 +254,40 @@ public class CryptoHelper {
     //
     // Get an RSA Cipher instance
     //
-    Cipher rsa = null;
+    //Cipher rsa = null;
             
     try {
+      /* The following commented code can be used the BouncyCastle
+       * JCE provider signature is intact, which is not the
+       * case when BC has been repackaged using jarjar
       rsa = Cipher.getInstance("RSA/ECB/PKCS1Padding", "BC");
       rsa.init (Cipher.ENCRYPT_MODE, key, CryptoHelper.sr);                   
       return rsa.doFinal(data);
+      */
+      AsymmetricBlockCipher c = new PKCS1Encoding(new RSABlindedEngine());
+      if (key instanceof RSAPublicKey) {
+        c.init(true, new RSAKeyParameters(true, ((RSAPublicKey) key).getModulus(), ((RSAPublicKey) key).getPublicExponent()));
+      } else if (key instanceof RSAPrivateKey) {
+        c.init(true, new RSAKeyParameters(true, ((RSAPrivateKey) key).getModulus(), ((RSAPrivateKey) key).getPrivateExponent()));
+      } else {
+        return null;
+      }
+
+      int insize = c.getInputBlockSize();
+
+      int offset = 0;
+      
+      ByteArrayOutputStream baos = new ByteArrayOutputStream();
+      
+      while(offset < data.length) {
+        int len = Math.min(insize, data.length - offset);
+        baos.write(c.processBlock(data, offset, len));
+        offset += len;
+      }
+
+      return baos.toByteArray();
+
+/*
     } catch (NoSuchProviderException nspe) {
       return null;
     } catch (NoSuchPaddingException nspe) {
@@ -267,6 +299,12 @@ public class CryptoHelper {
     } catch (BadPaddingException bpe) {
       return null;
     } catch (IllegalBlockSizeException ibse) {
+      return null;
+    }
+*/
+    } catch (InvalidCipherTextException icte) {
+      return null;
+    } catch (IOException ioe) {
       return null;
     }
   }
@@ -283,13 +321,41 @@ public class CryptoHelper {
     // Get an RSA Cipher instance
     //
 
-    Cipher rsa = null;
+    //Cipher rsa = null;
 
     try {
+      /* The following commented code can be used the BouncyCastle
+       * JCE provider signature is intact, which is not the
+       * case when BC has been repackaged using jarjar
       rsa = Cipher.getInstance("RSA/ECB/PKCS1Padding", "BC");
       rsa.init (Cipher.DECRYPT_MODE, key, CryptoHelper.sr);
-
       return rsa.doFinal(data);
+      */
+      
+      AsymmetricBlockCipher c = new PKCS1Encoding(new RSABlindedEngine());
+      if (key instanceof RSAPublicKey) {
+        c.init(false, new RSAKeyParameters(true, ((RSAPublicKey) key).getModulus(), ((RSAPublicKey) key).getPublicExponent()));
+      } else if (key instanceof RSAPrivateKey) {
+        c.init(false, new RSAKeyParameters(true, ((RSAPrivateKey) key).getModulus(), ((RSAPrivateKey) key).getPrivateExponent()));
+      } else {
+        return null;
+      }
+
+      int insize = c.getInputBlockSize();
+
+      int offset = 0;
+      
+      ByteArrayOutputStream baos = new ByteArrayOutputStream();
+      
+      while(offset < data.length) {
+        int len = Math.min(insize, data.length - offset);
+        baos.write(c.processBlock(data, offset, len));
+        offset += len;
+      }
+
+      return baos.toByteArray();
+      
+/*
     } catch (NoSuchProviderException nspe) {
       return null;
     } catch (NoSuchPaddingException nspe) {
@@ -302,7 +368,13 @@ public class CryptoHelper {
       return null;
     } catch (IllegalBlockSizeException ibse) {
       return null;
-    }    
+    }
+*/
+    } catch (InvalidCipherTextException icte) {
+      return null;
+    } catch (IOException ioe) {
+      return null;
+    }
   }
   
   /**
