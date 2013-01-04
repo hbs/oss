@@ -3,6 +3,10 @@ apply plugin: 'eclipse'
 apply plugin: 'war'
 apply plugin: 'jetty'
 
+configurations {
+  tools
+}
+
 //
 // Dependency on gradle-git to download juds to download juds
 // @see https://github.com/ajoberstar/gradle-git
@@ -14,6 +18,10 @@ buildscript {
 }
 
 import org.ajoberstar.gradle.git.tasks.*;
+
+//
+// Retrieve/Configure/Build JUDS
+//
 
 task clonejuds(type: GitClone) {
   def destination = file('juds')
@@ -65,6 +73,8 @@ dependencies {
   
   compile files('juds/juds-0.94.jar')
   
+  tools files('tools/jarjar-1.4.jar')
+
   testCompile group: 'junit', name: 'junit', version: '4.+'
 }
 
@@ -118,10 +128,10 @@ task(OSSGenMasterSecret, dependsOn: 'build', type: JavaExec) {
 
 task(OSSInit, dependsOn: 'build') {
   doFirst { 
-    ext.props = ['oss.url', 'oss.sshkey']
+    ext.props = ['oss.url']
     for (prop in ext.props) {
       if (null == System.getProperty(prop)) {
-        throw new RuntimeException('Usage: gradle -Doss.url=OSS_URL -Doss.sshkey=SSH_KEY_FINGERPRINT OSSInit\nPassing the raw init secret via stdin.')
+        throw new RuntimeException('Usage: gradle -Doss.url=OSS_URL [-Doss.sshkey=SSH_KEY_FINGERPRINT] OSSInit\nPassing the raw init secret via stdin.')
       }
     }
     ext.cp = ''
@@ -130,22 +140,23 @@ task(OSSInit, dependsOn: 'build') {
     }
     println 'To initialize OSS run the following command:'
     println ''
-    println 'gpg -d XXXXXXXX.oss | java -classpath ' + ext.cp + ' com.geoxp.oss.OSSInit ' + System.getProperty('oss.url') + ' ' + System.getProperty('oss.sshkey')
+    println 'gpg -d XXXXXXXX.oss | java -cp build/libs/oss-client.jar com.geoxp.oss.client.OSSInit ' + System.getProperty('oss.url') + ' ' + (null != System.getProperty('oss.sshkey') ? System.getProperty('oss.sshkey') : '')
+//classpath ' + ext.cp + ' com.geoxp.oss.client.OSSInit ' + System.getProperty('oss.url') + ' ' + (null != System.getProperty('oss.sshkey') ? System.getProperty('oss.sshkey') : '')
   }
 }
 
 task(OSSGenSecret, dependsOn: 'build', type: JavaExec) {
   doFirst { 
-    ext.props = ['oss.url', 'oss.secret', 'oss.sshkey']
+    ext.props = ['oss.url', 'oss.secret']
     for (prop in ext.props) {
       if (null == System.getProperty(prop)) {
-        throw new RuntimeException('Usage: gradle -Doss.url=OSS_URL -Doss.secret=SECRET_NAME -Doss.sshkey=SSH_KEY_FINGERPRINT OSSGenSecret')
+        throw new RuntimeException('Usage: gradle -Doss.url=OSS_URL -Doss.secret=SECRET_NAME [-Doss.sshkey=SSH_KEY_FINGERPRINT] OSSGenSecret')
       }
     }
   }
   main = 'com.geoxp.oss.client.OSSGenSecret'
   classpath = sourceSets.main.runtimeClasspath
-  args System.getProperty('oss.url'), System.getProperty('oss.secret'), System.getProperty('oss.sshkey')
+  args System.getProperty('oss.url'), System.getProperty('oss.secret'), null != System.getProperty('oss.sshkey') ? System.getProperty('oss.sshkey') : ''
 }
 
 task(OSSGetSecret, dependsOn: 'build', type: JavaExec) {
@@ -160,4 +171,47 @@ task(OSSGetSecret, dependsOn: 'build', type: JavaExec) {
   main = 'com.geoxp.oss.client.OSSGetSecret'
   classpath = sourceSets.main.runtimeClasspath
   args System.getProperty('oss.url'), System.getProperty('oss.secret'), null != System.getProperty('oss.sshkey') ? System.getProperty('oss.sshkey') : ''
+}
+
+task ossClientJar(type: Jar, dependsOn: jar) {
+  inputs.files jar.archivePath
+  appendix = 'client'
+
+  doLast {
+    project.ant {
+      taskdef name: "jarjar", classname: "com.tonicsystems.jarjar.JarJarTask", classpath: configurations.tools.asPath
+      jarjar(jarfile: archivePath) {
+        zipfileset(src: jar.archivePath) {
+          exclude(name: 'com/geoxp/oss/servlet/**')
+          exclude(name: 'com/geoxp/oss/OSS.class')
+          exclude(name: 'com/geoxp/oss/OSS$*')
+          exclude(name: 'com/geoxp/oss/KeyStore.class')
+          exclude(name: 'com/geoxp/oss/DirectoryHierarchyKeyStore.class')
+          exclude(name: 'com/geoxp/oss/MasterSecretGenerator.class')
+        }
+        //sourceSets.main.allSource.findAll { file -> println 'FILE >>> ' + file }
+
+        //
+        // Iterate over .jar files
+        //
+        configurations.runtime.files.findAll {file ->
+          ['servlet-api', 'guice-servlet', 'guice', 'javax.inject', 'aopalliance', 'asm'].every { !file.name.startsWith(it) }
+        }.each {jarjarFile ->
+          zipfileset(src: jarjarFile) {
+            exclude(name: 'META-INF/**')
+          }
+        }
+
+        rule pattern: "com.geoxp.**", result: "@0"
+        rule pattern: "com.etsy.net.**", result: '@0'
+        rule pattern: "org.**", result: "com.geoxp.oss.jarjar.@0"
+        rule pattern: "net.**", result: "com.geoxp.oss.jarjar.@0"
+        rule pattern: "com.**", result: "com.geoxp.oss.jarjar.@0"
+      }
+    }
+  }
+}
+
+assemble {
+  dependsOn ossClientJar
 }
