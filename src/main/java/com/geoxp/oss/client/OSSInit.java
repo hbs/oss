@@ -26,7 +26,7 @@ public class OSSInit {
       System.exit(1);
     }
 
-    String sshkey = args.length > 2 ? ("".equals(args[1]) ? null : args[1]) : null;
+    String sshkey = args.length > 1 ? ("".equals(args[1]) ? null : args[1]) : null;
     boolean initialized = OSSClient.init(args[0], sshkey);    
 
     if (initialized) {
