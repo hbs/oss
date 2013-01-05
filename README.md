@@ -44,3 +44,11 @@ gradle -Doss.url=http://127.0.0.1:8080/oss -Doss.secret=SECRET_NAME OSSGenSecret
 4. GetSecret
 
 gradle -Doss.url=http://127.0.0.1:8080/oss -Doss.secret=SECRET_NAME OSSGetSecret
+
+5. PutSecret
+
+gradle -Doss.url=http://127.0.0.1:8080/oss -Doss.secret=SECRET_NAME OSSPutSecret
+
+6. Wrap
+
+gradle -Doss.url=http://127.0.0.1:8080/oss -Doss.secret=SECRET_NAME OSSWrap
