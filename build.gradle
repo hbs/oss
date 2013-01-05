@@ -141,7 +141,34 @@ task(OSSInit, dependsOn: 'build') {
     println 'To initialize OSS run the following command:'
     println ''
     println 'gpg -d XXXXXXXX.oss | java -cp build/libs/oss-client.jar com.geoxp.oss.client.OSSInit ' + System.getProperty('oss.url') + ' ' + (null != System.getProperty('oss.sshkey') ? System.getProperty('oss.sshkey') : '')
-//classpath ' + ext.cp + ' com.geoxp.oss.client.OSSInit ' + System.getProperty('oss.url') + ' ' + (null != System.getProperty('oss.sshkey') ? System.getProperty('oss.sshkey') : '')
+  }
+}
+
+task(OSSPutSecret, dependsOn: 'build') {
+  doFirst { 
+    ext.props = ['oss.url','oss.secret']
+    for (prop in ext.props) {
+      if (null == System.getProperty(prop)) {
+        throw new RuntimeException('Usage: gradle -Doss.url=OSS_URL -Doss.secret=SECRET_NAME [-Doss.sshkey=SSH_KEY_FINGERPRINT] OSSPutSecret\nPassing the secret to store via stdin.')
+      }
+    }
+    println 'To store a secret, run the following command:'
+    println ''
+    println 'cat SECRET | java -cp build/libs/oss-client.jar com.geoxp.oss.client.OSSPutSecret ' + System.getProperty('oss.url') + ' ' + System.getProperty('oss.secret') + ' ' + (null != System.getProperty('oss.sshkey') ? System.getProperty('oss.sshkey') : '')
+  }
+}
+
+task(OSSWrap, dependsOn: 'build') {
+  doFirst { 
+    ext.props = ['oss.url','oss.secret']
+    for (prop in ext.props) {
+      if (null == System.getProperty(prop)) {
+        throw new RuntimeException('Usage: gradle -Doss.url=OSS_URL -Doss.secret=SECRET_NAME [-Doss.sshkey=SSH_KEY_FINGERPRINT] OSSWrap\nPassing data to wrap via stdin.\nSecret must be of length 128, 192 or 256 bits.')
+      }
+    }
+    println 'To wrap data, run the following command:'
+    println ''
+    println 'cat DATA | java -cp build/libs/oss-client.jar com.geoxp.oss.client.OSSWrap ' + System.getProperty('oss.url') + ' ' + System.getProperty('oss.secret') + ' ' + (null != System.getProperty('oss.sshkey') ? System.getProperty('oss.sshkey') : '')
   }
 }
 
