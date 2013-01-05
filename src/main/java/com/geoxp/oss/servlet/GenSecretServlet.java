@@ -97,6 +97,7 @@ public class GenSecretServlet extends HttpServlet {
       OSS.getKeyStore().putSecret(new String(osstoken.getSecret(), "UTF-8"), wrappedsecret);
     } catch (OSSException osse) {
       resp.sendError(HttpServletResponse.SC_BAD_REQUEST, osse.getMessage());
+      return;
     }
     
     resp.setStatus(HttpServletResponse.SC_OK);
