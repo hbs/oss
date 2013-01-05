@@ -20,11 +20,11 @@ import java.io.ByteArrayOutputStream;
 
 import com.geoxp.oss.OSS;
 
-public class OSSInit {
+public class OSSPutSecret {
   public static void main(String[] args) throws Exception {
     
-    if (args.length < 1) {
-      System.err.println("OSSInit OSS_INIT_URL [SSH_SIGNING_KEY_FINGERPRINT]");
+    if (args.length < 2) {
+      System.err.println("OSSPutSecret OSS_INIT_URL SECRET_NAME [SSH_SIGNING_KEY_FINGERPRINT]");
       System.exit(1);
     }
 
@@ -48,13 +48,7 @@ public class OSSInit {
     
     secret.close();
 
-    String sshkey = args.length > 1 ? ("".equals(args[1]) ? null : args[1]) : null;
-    boolean initialized = OSSClient.init(args[0], secret.toByteArray(), sshkey);    
-
-    if (initialized) {
-      System.out.println("Open Secret Server initialized successfully");
-    } else {
-      System.out.println("Open Secret Server not yet initialized, needs more secrets.");
-    }
+    String sshkey = args.length > 2 ? ("".equals(args[2]) ? null : args[2]) : null;
+    OSSClient.putSecret(args[0], args[1], secret.toByteArray(), sshkey);    
   }
 }

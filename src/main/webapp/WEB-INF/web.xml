@@ -19,6 +19,12 @@
   </context-param>   
 
   <context-param>    
+   <description>Comma separated list of SSH key fingerprints that can store secrets</description>
+   <param-name>oss.putsecret.sshkeys</param-name>
+   <param-value>fd:c3:7a:......:5c:8a:13</param-value>
+  </context-param>   
+
+  <context-param>    
    <description>Comma separated list of SSH key fingerprints that can initialize the Open Secret Server</description>
    <param-name>oss.init.sshkeys</param-name>
    <param-value>46:94:d7:......:26:d9:ac</param-value>

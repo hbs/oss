@@ -42,6 +42,11 @@ public class OSS {
   public static final String CONTEXT_PARAM_OSS_GENSECRET_SSHKEYS = "oss.gensecret.sshkeys";
 
   /**
+   * Name of servlet context init parameter containing the list of SSH keys that can call putsecret
+   */
+  public static final String CONTEXT_PARAM_OSS_PUTSECRET_SSHKEYS = "oss.putsecret.sshkeys";
+
+  /**
    * Name of servlet context init parameter containing the list of SSH keys that can call init
    */
   public static final String CONTEXT_PARAM_OSS_INIT_SSHKEYS = "oss.init.sshkeys";
@@ -91,6 +96,11 @@ public class OSS {
    */
   private static final Set<String> INIT_AUTHORIZED_SSHKEYS = new HashSet<String>();
 
+  /**
+   * Set of SSH key fingerprints which can store secrets
+   */
+  private static final Set<String> PUTSECRET_AUTHORIZED_SSHKEYS = new HashSet<String>();
+  
   private static KeyStore KEYSTORE;
   
   private static final Set<byte[]> initSecrets = new HashSet<byte[]>();
@@ -159,6 +169,10 @@ public class OSS {
     setSSHKeys(INIT_AUTHORIZED_SSHKEYS, keylist);
   }
   
+  public static void setPutSecretSSHKeys(String keylist) {
+    setSSHKeys(PUTSECRET_AUTHORIZED_SSHKEYS, keylist);
+  }
+  
   private static void setSSHKeys(Set<String> keyset, String keylist) {
     if (null == keylist) {
       return;
@@ -183,6 +197,10 @@ public class OSS {
   
   public static boolean checkInitSSHKey(byte[] keyblob) {
     return checkSSHKey(INIT_AUTHORIZED_SSHKEYS, keyblob);
+  }
+  
+  public static boolean checkPutSecretSSHKey(byte[] keyblob) {
+    return checkSSHKey(PUTSECRET_AUTHORIZED_SSHKEYS, keyblob);
   }
   
   private static boolean checkSSHKey(Set<String> keys, byte[] keyblob) {

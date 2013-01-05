@@ -24,6 +24,7 @@ public class GuiceServletModule extends ServletModule {
   public static final String SERVLET_PATH_INIT = "/Init";
   public static final String SERVLET_PATH_GET_SECRET = "/GetSecret";
   public static final String SERVLET_PATH_GEN_SECRET = "/GenSecret";
+  public static final String SERVLET_PATH_PUT_SECRET = "/PutSecret";
   public static final String SERVLET_PATH_GET_OSS_RSA = "/GetOSSRSA";
   
   @Override
@@ -31,6 +32,7 @@ public class GuiceServletModule extends ServletModule {
     serve(SERVLET_PATH_GEN_MASTER_SECRET).with(GenMasterSecretServlet.class);
     serve(SERVLET_PATH_INIT).with(InitServlet.class);
     serve(SERVLET_PATH_GET_SECRET).with(GetSecretServlet.class);
+    serve(SERVLET_PATH_PUT_SECRET).with(PutSecretServlet.class);
     serve(SERVLET_PATH_GEN_SECRET).with(GenSecretServlet.class);
     serve(SERVLET_PATH_GET_OSS_RSA).with(GetOSSRSAServlet.class);
   }

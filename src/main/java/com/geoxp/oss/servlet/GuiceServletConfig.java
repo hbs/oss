@@ -38,6 +38,9 @@ public class GuiceServletConfig extends GuiceServletContextListener {
     String gensecretsshkeys = System.getProperty(OSS.CONTEXT_PARAM_OSS_GENSECRET_SSHKEYS);
     OSS.setGenSecretSSHKeys(null != gensecretsshkeys ? gensecretsshkeys : servletContextEvent.getServletContext().getInitParameter(OSS.CONTEXT_PARAM_OSS_GENSECRET_SSHKEYS));
 
+    String putsecretsshkeys = System.getProperty(OSS.CONTEXT_PARAM_OSS_PUTSECRET_SSHKEYS);
+    OSS.setPutSecretSSHKeys(null != putsecretsshkeys ? putsecretsshkeys : servletContextEvent.getServletContext().getInitParameter(OSS.CONTEXT_PARAM_OSS_PUTSECRET_SSHKEYS));
+
     String initsshkeys = System.getProperty(OSS.CONTEXT_PARAM_OSS_INIT_SSHKEYS);
     OSS.setInitSSHKeys(null != initsshkeys ? initsshkeys : servletContextEvent.getServletContext().getInitParameter(OSS.CONTEXT_PARAM_OSS_INIT_SSHKEYS));
 
