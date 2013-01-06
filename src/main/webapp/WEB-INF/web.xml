@@ -7,6 +7,12 @@
   
   <!-- The following context params can be overridden by system properties with the same name -->
   <context-param>    
+   <description>Maximum size of storable secret (for put secret calls) in bytes</description>
+   <param-name>oss.max.secret.size</param-name>
+   <param-value>32</param-value>
+  </context-param>
+
+  <context-param>    
    <description>Number of milliseconds a token is considered valid</description>
    <param-name>oss.token.ttl</param-name>
    <param-value>15000</param-value>

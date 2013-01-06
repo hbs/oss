@@ -32,6 +32,9 @@ public class GuiceServletConfig extends GuiceServletContextListener {
     // Read parameters, from system properties then as a fall back from context parameters
     //
     
+    String maxsecretsize = System.getProperty(OSS.CONTEXT_PARAM_OSS_MAX_SECRET_SIZE);
+    OSS.setMaxSecretSize(null != maxsecretsize ? maxsecretsize : servletContextEvent.getServletContext().getInitParameter(OSS.CONTEXT_PARAM_OSS_MAX_SECRET_SIZE));
+    
     String maxtokenage = System.getProperty(OSS.CONTEXT_PARAM_OSS_TOKEN_TTL);
     OSS.setMaxTokenAge(null != maxtokenage ? maxtokenage : servletContextEvent.getServletContext().getInitParameter(OSS.CONTEXT_PARAM_OSS_TOKEN_TTL));
 

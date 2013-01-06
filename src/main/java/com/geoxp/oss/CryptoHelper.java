@@ -127,7 +127,7 @@ public class CryptoHelper {
    * @param data Data to pad
    * @return The padded data
    */
-  public static byte[] padPKCS7(int alignment, byte[] data) {
+  public static byte[] padPKCS7(int alignment, byte[] data, int offset, int len) {
 
     //
     // Allocate the target byte array. Its size is a multiple of 'alignment'.
@@ -135,13 +135,13 @@ public class CryptoHelper {
     // 'alignment' bytes longer than the data to pad.
     //
     
-    byte[] target = new byte[data.length + (alignment - data.length % alignment)];
+    byte[] target = new byte[len + (alignment - len % alignment)];
     
     //
     // Copy the data to pad into the target array
     //
           
-    System.arraycopy (data, 0, target, 0, data.length);
+    System.arraycopy (data, offset, target, 0, len);
       
     //
     // Add padding bytes
@@ -149,11 +149,15 @@ public class CryptoHelper {
       
     PKCS7Padding padding = new PKCS7Padding();
       
-    padding.addPadding(target, data.length);
+    padding.addPadding(target, len);
                       
     return target;
   }
 
+  public static byte[] padPKCS7(int alignment, byte[] data) {
+    return padPKCS7(alignment, data, 0, data.length);
+  }
+  
   /**
    * Remove PKCS7 padding from padded data
    * @param padded The padded data to 'unpad'
@@ -191,7 +195,7 @@ public class CryptoHelper {
    * @param data Data to wrap
    * @return The wrapped data
    */
-  public static byte[] wrapAES(byte[] key, byte[] data) {
+  public static byte[] wrapAES(byte[] key, byte[] data, int offset, int len) {
     
     //
     // Initialize AES Wrap Engine for wrapping
@@ -205,13 +209,17 @@ public class CryptoHelper {
     // Pad the data on an 8 bytes boundary
     //
     
-    byte[] padded = padPKCS7(8, data);
+    byte[] padded = padPKCS7(8, data, offset, len);
     
     //
     // Wrap data and return it
     //
     
     return aes.wrap(padded, 0, padded.length);
+  }
+
+  public static byte[] wrapAES(byte[] key, byte[] data) {
+    return wrapAES(key, data, 0, data.length);
   }
   
   /**

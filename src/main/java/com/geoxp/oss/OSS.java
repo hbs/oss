@@ -32,6 +32,17 @@ import org.bouncycastle.util.encoders.Hex;
 public class OSS {
   
   /**
+   * Size of nonce to append to secrets prior to wrapping them. This is so
+   * two identical secrets do not appear as identical secret files after wrapping.
+   */
+  public static final int NONCE_BYTES = 8;
+  
+  /**
+   * Name of servlet context init parameter containing the maximum secret size in bytes
+   */
+  public static final String CONTEXT_PARAM_OSS_MAX_SECRET_SIZE = "oss.max.secret.size";
+
+  /**
    * Name of servlet context init parameter containing the token TTL in ms
    */
   public static final String CONTEXT_PARAM_OSS_TOKEN_TTL = "oss.token.ttl";
@@ -80,6 +91,11 @@ public class OSS {
    * Private key part of the session RSA key pair
    */
   private static RSAPrivateKey SESSION_RSA_PRIVATE;
+  
+  /**
+   * Maximum size of a secret
+   */
+  private static int MAX_SECRET_SIZE = 32;
   
   /**
    * Maximum allowed age of received tokens, in ms
@@ -151,6 +167,14 @@ public class OSS {
   
   public static long getMaxTokenAge() {
     return MAX_TOKEN_AGE;
+  }
+  
+  public static int getMaxSecretSize() {
+    return MAX_SECRET_SIZE;
+  }
+  
+  public static void setMaxSecretSize(String size) {
+    MAX_SECRET_SIZE = Integer.valueOf(size);
   }
   
   public static void setMaxTokenAge(String ttl) {

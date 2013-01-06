@@ -1,5 +1,6 @@
 package com.geoxp.oss.servlet;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 import javax.servlet.ServletException;
@@ -85,12 +86,28 @@ public class PutSecretServlet extends HttpServlet {
     byte[] secretname = CryptoHelper.decodeNetworkString(osstoken.getSecret(), 0);
     byte[] secret = CryptoHelper.decodeNetworkString(osstoken.getSecret(), secretname.length + 4);
     
+    if (secret.length > OSS.getMaxSecretSize()) {
+      resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Secret cannot exceed " + OSS.getMaxSecretSize() + " bytes.");
+      return;
+    }
+    
+    //
+    // Add nonce to secret prior to wrapping
+    //
+    
+    byte[] nonce = new byte[OSS.NONCE_BYTES];
+    CryptoHelper.getSecureRandom().nextBytes(nonce);
+    
+    ByteArrayOutputStream nonced = new ByteArrayOutputStream();
+    nonced.write(nonce);
+    nonced.write(secret);
+    
     //
     // Attempt to store secret
     //
-    
+        
     try {          
-      OSS.getKeyStore().putSecret(new String(secretname, "UTF-8"), CryptoHelper.wrapAES(OSS.getMasterSecret(), secret));
+      OSS.getKeyStore().putSecret(new String(secretname, "UTF-8"), CryptoHelper.wrapAES(OSS.getMasterSecret(), nonced.toByteArray()));
     } catch (OSSException e) {
       resp.sendError(HttpServletResponse.SC_BAD_REQUEST, e.getMessage());
       return;

@@ -103,15 +103,15 @@ public class GetSecretServlet extends HttpServlet {
       resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Secret integrity failed.");
       return;
     }
-    
+           
     //
-    // Wrap secret with a temporary AES key
+    // Wrap secret (excluding nonce) with a temporary AES key
     //
     
     byte[] wrappingkey = new byte[32];
     CryptoHelper.getSecureRandom().nextBytes(wrappingkey);
     
-    secret = CryptoHelper.wrapAES(wrappingkey, secret);
+    secret = CryptoHelper.wrapAES(wrappingkey, secret, OSS.NONCE_BYTES, secret.length - OSS.NONCE_BYTES);
         
     //
     // Seal wrapping key with provided RSA pub key

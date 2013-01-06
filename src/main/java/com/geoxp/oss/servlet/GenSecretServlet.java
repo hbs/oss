@@ -80,10 +80,10 @@ public class GenSecretServlet extends HttpServlet {
     }
     
     //
-    // Generate secret
+    // Generate secret (and nonce)
     //
     
-    byte[] secret = new byte[32];
+    byte[] secret = new byte[OSS.NONCE_BYTES + 32];
     
     CryptoHelper.getSecureRandom().nextBytes(secret);
     
