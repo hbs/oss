@@ -27,6 +27,8 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.bouncycastle.util.encoders.Base64;
 import org.bouncycastle.util.encoders.Hex;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.geoxp.oss.CryptoHelper;
 import com.geoxp.oss.OSS;
@@ -36,6 +38,9 @@ import com.google.inject.Singleton;
 
 @Singleton
 public class GetSecretServlet extends HttpServlet {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(GetSecretServlet.class);  
+
   @Override
   protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 
@@ -69,6 +74,7 @@ public class GetSecretServlet extends HttpServlet {
     try {
       osstoken = OSS.checkToken(tokendata);
     } catch (OSSException osse) {
+      LOGGER.error("doPost", osse);
       resp.sendError(HttpServletResponse.SC_BAD_REQUEST, osse.getMessage());
       return;
     }
@@ -88,8 +94,9 @@ public class GetSecretServlet extends HttpServlet {
     
     try {          
       secret = OSS.getKeyStore().getSecret(new String(secretname, "UTF-8"), new String(Hex.encode(CryptoHelper.sshKeyBlobFingerprint(osstoken.getKeyblob()))));
-    } catch (OSSException e) {
-      resp.sendError(HttpServletResponse.SC_BAD_REQUEST, e.getMessage());
+    } catch (OSSException osse) {
+      LOGGER.error("doPost", osse);
+      resp.sendError(HttpServletResponse.SC_BAD_REQUEST, osse.getMessage());
       return;
     }
     
@@ -100,6 +107,7 @@ public class GetSecretServlet extends HttpServlet {
     secret = CryptoHelper.unwrapAES(OSS.getMasterSecret(), secret);
    
     if (null == secret) {
+      LOGGER.error("[" + new String(Hex.encode(CryptoHelper.sshKeyBlobFingerprint(osstoken.getKeyblob()))) + "] failed to retrieve secret '" + new String(secretname, "UTF-8") + "', integrity check failed.");
       resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Secret integrity failed.");
       return;
     }
@@ -128,5 +136,7 @@ public class GetSecretServlet extends HttpServlet {
     resp.setStatus(HttpServletResponse.SC_OK);
     
     resp.getWriter().println(new String(Base64.encode(baos.toByteArray()), "UTF-8"));
+    
+    LOGGER.info("[" + new String(Hex.encode(CryptoHelper.sshKeyBlobFingerprint(osstoken.getKeyblob()))) + "] retrieved " + (secret.length - OSS.NONCE_BYTES) + " bytes of secret '" + new String(secretname, "UTF-8") + "'.");
   }
 }

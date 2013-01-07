@@ -118,7 +118,7 @@ public class GenMasterSecretServlet extends HttpServlet {
     //
     
     if (keys.size() < keyids.length) {
-      response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Some keys specified in '" + PARAM_KEYID + "' were not found in the provided key rings.");
+      response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Some keys not present in the provided key rings.");
       return;
     }
 

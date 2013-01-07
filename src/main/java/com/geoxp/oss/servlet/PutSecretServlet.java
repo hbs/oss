@@ -9,15 +9,20 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.bouncycastle.util.encoders.Base64;
+import org.bouncycastle.util.encoders.Hex;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.geoxp.oss.CryptoHelper;
 import com.geoxp.oss.OSS;
-import com.geoxp.oss.OSS.OSSToken;
 import com.geoxp.oss.OSSException;
 import com.google.inject.Singleton;
 
 @Singleton
 public class PutSecretServlet extends HttpServlet {
+  
+  private static final Logger LOGGER = LoggerFactory.getLogger(PutSecretServlet.class);
+  
   @Override
   protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
     
@@ -66,17 +71,9 @@ public class PutSecretServlet extends HttpServlet {
     try {
       osstoken = OSS.checkToken(inittoken);
     } catch (OSSException osse) {
+      LOGGER.error("doPost", osse);
       resp.sendError(HttpServletResponse.SC_BAD_REQUEST, osse.getMessage());
       return;
-    }
-    
-    //
-    // Check that key can store secrets
-    //
-    
-    if (!OSS.checkPutSecretSSHKey(osstoken.getKeyblob())) {
-      resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "SSH Key cannot store a secret.");
-      return;  
     }
     
     //
@@ -86,7 +83,22 @@ public class PutSecretServlet extends HttpServlet {
     byte[] secretname = CryptoHelper.decodeNetworkString(osstoken.getSecret(), 0);
     byte[] secret = CryptoHelper.decodeNetworkString(osstoken.getSecret(), secretname.length + 4);
     
+    //
+    // Check that key can store secrets
+    //
+    
+    if (!OSS.checkPutSecretSSHKey(osstoken.getKeyblob())) {
+      LOGGER.error("[" + new String(Hex.encode(CryptoHelper.sshKeyBlobFingerprint(osstoken.getKeyblob()))) + "] (unauthorized) attempted to store " + secret.length + " bytes as secret '" + secretname + "'");
+      resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "SSH Key cannot store a secret.");
+      return;  
+    }
+
+    //
+    // Check secret length
+    //
+    
     if (secret.length > OSS.getMaxSecretSize()) {
+      LOGGER.error("[" + new String(Hex.encode(CryptoHelper.sshKeyBlobFingerprint(osstoken.getKeyblob()))) + "] failed to store " + secret.length + "bytes (>" + OSS.getMaxSecretSize() +") as secret '" + secretname + "'");
       resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Secret cannot exceed " + OSS.getMaxSecretSize() + " bytes.");
       return;
     }
@@ -108,7 +120,9 @@ public class PutSecretServlet extends HttpServlet {
         
     try {          
       OSS.getKeyStore().putSecret(new String(secretname, "UTF-8"), CryptoHelper.wrapAES(OSS.getMasterSecret(), nonced.toByteArray()));
+      LOGGER.info("[" + new String(Hex.encode(CryptoHelper.sshKeyBlobFingerprint(osstoken.getKeyblob()))) + "] stored " + secret.length + " bytes as secret '" + secretname + "'");
     } catch (OSSException e) {
+      LOGGER.error("doPost", e);
       resp.sendError(HttpServletResponse.SC_BAD_REQUEST, e.getMessage());
       return;
     }

@@ -24,6 +24,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.bouncycastle.util.encoders.Base64;
+import org.bouncycastle.util.encoders.Hex;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.geoxp.oss.CryptoHelper;
 import com.geoxp.oss.OSS;
@@ -32,6 +35,9 @@ import com.google.inject.Singleton;
 
 @Singleton
 public class InitServlet extends HttpServlet {
+  
+  private static final Logger LOGGER = LoggerFactory.getLogger(InitServlet.class);
+  
   @Override
   protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
     
@@ -84,6 +90,7 @@ public class InitServlet extends HttpServlet {
     try {
       osstoken = OSS.checkToken(inittoken);
     } catch (OSSException osse) {
+      LOGGER.error("doPost", osse);
       resp.sendError(HttpServletResponse.SC_BAD_REQUEST, osse.getMessage());
       return;
     }
@@ -93,6 +100,7 @@ public class InitServlet extends HttpServlet {
     //
     
     if (!OSS.checkInitSSHKey(osstoken.getKeyblob())) {
+      LOGGER.error("[" + new String(Hex.encode(CryptoHelper.sshKeyBlobFingerprint(osstoken.getKeyblob()))) + "] (unauthorized) attempted to initialize Open Secret Server.");
       resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "SSH signing key is not authorized to initialize this Open Secret Server.");
       return;
     }
@@ -104,13 +112,17 @@ public class InitServlet extends HttpServlet {
     try {
       OSS.init(osstoken.getSecret());
     } catch (OSSException osse) {
+      LOGGER.error("doPost", osse);
       resp.sendError(HttpServletResponse.SC_BAD_REQUEST, osse.getMessage());
       return;      
     }
     
     if (!OSS.isInitialized()) {
+      LOGGER.info("[" + new String(Hex.encode(CryptoHelper.sshKeyBlobFingerprint(osstoken.getKeyblob()))) + "] added secret to intialize Open Secret Server.");
       resp.sendError(HttpServletResponse.SC_ACCEPTED, "Open Secret Server not yet initialized, needs some more secrets.");
       return;
+    } else {
+      LOGGER.info("[" + new String(Hex.encode(CryptoHelper.sshKeyBlobFingerprint(osstoken.getKeyblob()))) + "] completed intialization of Open Secret Server.");
     }
     
     resp.setStatus(HttpServletResponse.SC_OK);

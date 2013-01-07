@@ -55,8 +55,6 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.geoxp.oss.CryptoHelper.SSHAgentClient;
-import com.geoxp.oss.CryptoHelper.SSHAgentClient.SSHKey;
 import com.geoxp.oss.CryptoHelper.SSSSGF256Polynomial;
 
 

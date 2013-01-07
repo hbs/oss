@@ -24,7 +24,7 @@ public class OSSGetSecret {
   
   public static void main(String[] args) throws Exception {
     if (args.length < 2) { 
-      throw new OSSException("Usage: OSSGetSecret OSS_GET_SECRET_URL SECRET_NAME [SSH_SIGNING_KEY_FINGERPRINT]");
+      throw new OSSException("Usage: OSSGetSecret OSS_URL SECRET_NAME [SSH_SIGNING_KEY_FINGERPRINT]");
     }
 
     String sshkey = args.length > 2 ? ("".equals(args[2]) ? null : args[2]) : null;

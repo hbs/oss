@@ -18,13 +18,11 @@ package com.geoxp.oss.client;
 
 import java.io.ByteArrayOutputStream;
 
-import com.geoxp.oss.OSS;
-
 public class OSSPutSecret {
   public static void main(String[] args) throws Exception {
     
     if (args.length < 2) {
-      System.err.println("OSSPutSecret OSS_INIT_URL SECRET_NAME [SSH_SIGNING_KEY_FINGERPRINT]");
+      System.err.println("Usage: OSSPutSecret OSS_URL SECRET_NAME [SSH_SIGNING_KEY_FINGERPRINT]");
       System.exit(1);
     }
 

@@ -18,13 +18,11 @@ package com.geoxp.oss.client;
 
 import java.io.ByteArrayOutputStream;
 
-import com.geoxp.oss.OSS;
-
 public class OSSInit {
   public static void main(String[] args) throws Exception {
     
     if (args.length < 1) {
-      System.err.println("OSSInit OSS_INIT_URL [SSH_SIGNING_KEY_FINGERPRINT]");
+      System.err.println("Usage: OSSInit OSS_URL [SSH_SIGNING_KEY_FINGERPRINT]");
       System.exit(1);
     }
 

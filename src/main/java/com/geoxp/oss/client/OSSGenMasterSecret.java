@@ -27,7 +27,7 @@ import java.util.Map.Entry;
 public class OSSGenMasterSecret {
   public static void main(String[] args) throws Exception {
     if (4 != args.length) {
-      System.err.println("Usage: OSSGenMasterSecret OSS_GEN_MASTER_SECRET_URL PATH_TO_PUBRINGS PGP_KEY_IDS K");
+      System.err.println("Usage: OSSGenMasterSecret OSS_URL PATH_TO_PUBRINGS PGP_KEY_IDS K");
       System.exit(1);
     }
     

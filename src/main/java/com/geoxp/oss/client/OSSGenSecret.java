@@ -20,7 +20,7 @@ package com.geoxp.oss.client;
 public class OSSGenSecret {
   public static void main(String[] args) throws Exception {
     if (args.length < 2) { 
-      System.err.println("Usage: OSSGenSecret OSS_GEN_SECRET_URL SECRET_NAME [SSH_SIGNING_KEY_FINGERPRINT]");
+      System.err.println("Usage: OSSGenSecret OSS_URL SECRET_NAME [SSH_SIGNING_KEY_FINGERPRINT]");
     }
     
     String sshkey = args.length > 2 ? ("".equals(args[2]) ? null : args[2]) : null;
