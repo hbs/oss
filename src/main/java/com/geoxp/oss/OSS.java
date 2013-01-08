@@ -68,13 +68,6 @@ public class OSS {
   public static final String CONTEXT_PARAM_OSS_KEYSTORE_DIR = "oss.keystore.dir";
   
   /**
-   * AES 256 key used to wrap the master secret. It is not intended to protect
-   * the secrecy of the master secret but simply to allow for integrity check
-   * via the use of AES Key Wrapping.
-   */
-  private static final byte[] MASTER_SECRET_WRAPPING_KEY = Hex.decode("000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F");
-  
-  /**
    * This is the master secret used by the instance of Open Secret Server to protect
    * the secrets it manages.
    */
@@ -147,10 +140,6 @@ public class OSS {
       public String getAlgorithm() { return "RSA"; }
       public BigInteger getPublicExponent() { return ((RSAKeyParameters) keypair.getPublic()).getExponent(); }
     };    
-  }
-  
-  public static byte[] getMasterSecretWrappingKey() {
-    return MASTER_SECRET_WRAPPING_KEY;
   }
   
   public static byte[] getMasterSecret() {
@@ -330,7 +319,7 @@ public class OSS {
     // If so this means the secret is the wrapped master secret.
     //
     
-    byte[] clearsecret = CryptoHelper.unwrapAES(MASTER_SECRET_WRAPPING_KEY, secret);
+    byte[] clearsecret = CryptoHelper.unwrapAES(MasterSecretGenerator.getMasterSecretWrappingKey(), secret);
     
     if (null != clearsecret) {
       MASTER_SECRET = clearsecret;
@@ -354,7 +343,7 @@ public class OSS {
     // Attempt to unwrap master secret
     //
     
-    byte[] sec = CryptoHelper.unwrapAES(MASTER_SECRET_WRAPPING_KEY, mastersecret);
+    byte[] sec = CryptoHelper.unwrapAES(MasterSecretGenerator.getMasterSecretWrappingKey(), mastersecret);
     
     if (null != sec) {
       MASTER_SECRET = sec;

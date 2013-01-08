@@ -26,12 +26,12 @@ import java.util.Map.Entry;
 
 public class OSSGenMasterSecret {
   public static void main(String[] args) throws Exception {
-    if (4 != args.length) {
-      System.err.println("Usage: OSSGenMasterSecret OSS_URL PATH_TO_PUBRINGS PGP_KEY_IDS K");
+    if (3 != args.length) {
+      System.err.println("Usage: OSSGenMasterSecret PATH_TO_PUBRINGS PGP_KEY_IDS K");
       System.exit(1);
     }
     
-    String[] keyids = args[2].split(",");
+    String[] keyids = args[1].split(",");
     
     List<String> pgpkeyids = new ArrayList<String>();
     
@@ -39,7 +39,7 @@ public class OSSGenMasterSecret {
       pgpkeyids.add(keyid);
     }
     
-    String[] pubrings = args[1].split(",");
+    String[] pubrings = args[0].split(",");
 
     List<String> pgppubrings = new ArrayList<String>();
     
@@ -66,7 +66,7 @@ public class OSSGenMasterSecret {
       pgppubrings.add(new String(baos.toByteArray(), "UTF-8"));
     }
 
-    Map<String,String> shares = OSSClient.genMasterSecret(args[0], pgppubrings, pgpkeyids, Integer.valueOf(args[3]));
+    Map<String,String> shares = OSSClient.genMasterSecret(pgppubrings, pgpkeyids, Integer.valueOf(args[2]));
     
     for (Entry<String,String> entry: shares.entrySet()) {
       System.out.println();

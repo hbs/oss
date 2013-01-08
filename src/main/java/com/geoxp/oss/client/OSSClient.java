@@ -22,6 +22,7 @@ import java.net.URI;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,13 +43,15 @@ import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
 import org.bouncycastle.crypto.generators.RSAKeyPairGenerator;
 import org.bouncycastle.crypto.params.RSAKeyGenerationParameters;
 import org.bouncycastle.crypto.params.RSAKeyParameters;
+import org.bouncycastle.openpgp.PGPPublicKey;
 import org.bouncycastle.util.encoders.Base64;
 
 import com.geoxp.oss.CryptoHelper;
 import com.geoxp.oss.CryptoHelper.SSHAgentClient;
 import com.geoxp.oss.CryptoHelper.SSHAgentClient.SSHKey;
+import com.geoxp.oss.MasterSecretGenerator;
+import com.geoxp.oss.OSS;
 import com.geoxp.oss.OSSException;
-import com.geoxp.oss.servlet.GenMasterSecretServlet;
 import com.geoxp.oss.servlet.GuiceServletModule;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -56,56 +59,67 @@ import com.google.gson.JsonParser;
 
 public class OSSClient {
   
-  public static Map<String,String> genMasterSecret(String ossURL, List<String> pubrings, List<String> pgpkeyids, int k) throws OSSException {
+  public static Map<String,String> genMasterSecret(List<String> pubrings, List<String> pgpkeyids, int k) throws OSSException {
     
     try {
-      URIBuilder builder = new URIBuilder(ossURL + GuiceServletModule.SERVLET_PATH_GEN_MASTER_SECRET);
       
-      builder.setParameter(GenMasterSecretServlet.PARAM_K, Integer.toString(k));
+      //
+      // Extract public keys from key rings
+      //
       
-      for (String keyid: pgpkeyids) {
-        builder.addParameter(GenMasterSecretServlet.PARAM_KEYID, keyid);
-      }
-
+      List<PGPPublicKey> keys = new ArrayList<PGPPublicKey>();
+      
       for (String pubring: pubrings) {
-        builder.addParameter(GenMasterSecretServlet.PARAM_PUBRING, pubring);
+        List<PGPPublicKey> pubkeys = CryptoHelper.PGPPublicKeysFromKeyRing(pubring);
+        
+        for (PGPPublicKey key: pubkeys) {
+          //
+          // Generate hex version of key id
+          //
+          String id = "000000000000000" + Long.toHexString(key.getKeyID()).toLowerCase();
+          id = id.substring(id.length() - 16);
+          
+          //
+          // Add the key if it is in 'keyids'
+          //
+          
+          for (String keyid: pgpkeyids) {
+            if (id.endsWith(keyid.toLowerCase())) {
+              keys.add(key);
+              break;
+            }
+          }
+        }      
       }
       
-      URI uri = builder.build();
+      //
+      // If we have fewer keys than the number of ids specified, throw an error
+      //
       
-      String qs = uri.getRawQuery();
-      
-      HttpClient httpclient = new DefaultHttpClient();
-      
-      HttpPost post = new HttpPost(uri.getScheme() + "://" + uri.getHost() + ":" + uri.getPort() + uri.getPath());
-      
-      post.setHeader("Content-Type", "application/x-www-form-urlencoded");
-      
-      post.setEntity(new StringEntity(qs));
-      
-      HttpResponse response = httpclient.execute(post);
-      HttpEntity resEntity = response.getEntity();
-      String content = EntityUtils.toString(resEntity, "UTF-8");
+      if (keys.size() < pgpkeyids.size()) {
+        throw new OSSException("Some keys not present in the provided key rings.");
+      }
 
-      post.reset();
+      //
+      // Generate the master secret
+      //
       
-      if (HttpServletResponse.SC_OK != response.getStatusLine().getStatusCode()) {
-        throw new OSSException(response.getStatusLine().getReasonPhrase());
+      Map<PGPPublicKey, byte[]> shares = MasterSecretGenerator.generate(keys, k);
+        
+      //
+      // Produce JSON output
+      //
+        
+      Map<String,String> strshares = new HashMap<String, String>();
+        
+      for (Entry<PGPPublicKey, byte[]> entry: shares.entrySet()) {
+        String id = "000000000000000" + Long.toHexString(entry.getKey().getKeyID());
+        id = id.substring(id.length() - 16);
+        
+        strshares.put(id, new String(entry.getValue(), "UTF-8"));
       }
       
-      JsonParser parser = new JsonParser();
-      JsonElement elt = parser.parse(content);
-
-      JsonObject obj = elt.getAsJsonObject();
-
-      Map<String,String> shares = new HashMap<String, String>();
-      
-      for (Entry<String, JsonElement> entry: obj.getAsJsonObject("shares").entrySet()) {
-        shares.put(entry.getKey(), entry.getValue().getAsString());
-      }
-      
-      return shares;
-      
+      return strshares;
     } catch (Exception e) {
       throw new OSSException(e);
     }    
@@ -804,6 +818,31 @@ public class OSSClient {
       if (null != agent) {
         agent.close();
       }
+    }
+  }
+  
+  /**
+   * Unwrap data wrapped using OSSWrap.
+   * 
+   * @param key Key to use for unwrapping.
+   * @param data Wrapped data
+   * @return The unwrapped data.
+   */
+  public static byte[] OSSUnwrap(byte[] key, byte[] data) throws OSSException {
+    //
+    // Unwrap data
+    //
+    
+    byte[] unwrapped = CryptoHelper.unwrapAES(key, data);
+    
+    //
+    // Remove nonce and return result
+    //
+    
+    if (data.length > OSS.NONCE_BYTES) {
+      return Arrays.copyOfRange(unwrapped, OSS.NONCE_BYTES, unwrapped.length);
+    } else {
+      throw new OSSException("Data is shorter than the size of nonce, probably not wrapped using OSS.");
     }
   }
 }

@@ -30,8 +30,35 @@ import org.bouncycastle.openpgp.PGPPublicKey;
 import org.bouncycastle.util.encoders.Hex;
 
 public class MasterSecretGenerator {
+  /**
+   * AES 256 key used to wrap the master secret. It is not intended to protect
+   * the secrecy of the master secret but simply to allow for integrity check
+   * via the use of AES Key Wrapping.
+   */
+  private static final byte[] MASTER_SECRET_WRAPPING_KEY = Hex.decode("000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F");
   
   public static Map<PGPPublicKey, byte[]> generate(List<PGPPublicKey> keys, int k) throws OSSException {
+    //
+    // Generate 256 bit secret
+    //
+    
+    SecureRandom sr = CryptoHelper.getSecureRandom();
+    
+    byte[] secret = new byte[32];
+    
+    sr.nextBytes(secret);
+    
+    //
+    // Wrap secret with a static AES Wrapping Key so we can check
+    // we've correctly recovered the secret on initialization
+    //
+    
+    byte[] wrappedsecret = CryptoHelper.wrapAES(MASTER_SECRET_WRAPPING_KEY, secret);
+    
+    return generate(keys, k, wrappedsecret);
+  }
+  
+  public static Map<PGPPublicKey, byte[]> generate(List<PGPPublicKey> keys, int k, byte[] wrappedsecret) throws OSSException {
     
     if (null == keys) {
       throw new OSSException("Missing public PGP Public Keys.");
@@ -71,23 +98,6 @@ public class MasterSecretGenerator {
     }
     
     //
-    // Generate 256 bit secret
-    //
-    
-    SecureRandom sr = CryptoHelper.getSecureRandom();
-    
-    byte[] secret = new byte[32];
-    
-    sr.nextBytes(secret);
-    
-    //
-    // Wrap secret with a static AES Wrapping Key so we can check
-    // we've correctly recovered the secret on initialization
-    //
-    
-    byte[] wrappedsecret = CryptoHelper.wrapAES(OSS.getMasterSecretWrappingKey(), secret);
-    
-    //
     // Split the secret using Shamir Secret Sharing Scheme if k is > 1
     //
     
@@ -122,5 +132,9 @@ public class MasterSecretGenerator {
     }
     
     return perkeysecret;
+  }
+  
+  public static byte[] getMasterSecretWrappingKey() {
+    return MASTER_SECRET_WRAPPING_KEY;
   }
 }

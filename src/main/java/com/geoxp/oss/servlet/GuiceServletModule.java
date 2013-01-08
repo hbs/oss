@@ -20,7 +20,6 @@ import com.google.inject.servlet.ServletModule;
 
 public class GuiceServletModule extends ServletModule {
   
-  public static final String SERVLET_PATH_GEN_MASTER_SECRET = "/GenMasterSecret";
   public static final String SERVLET_PATH_INIT = "/Init";
   public static final String SERVLET_PATH_GET_SECRET = "/GetSecret";
   public static final String SERVLET_PATH_GEN_SECRET = "/GenSecret";
@@ -29,7 +28,6 @@ public class GuiceServletModule extends ServletModule {
   
   @Override
   protected void configureServlets() {
-    serve(SERVLET_PATH_GEN_MASTER_SECRET).with(GenMasterSecretServlet.class);
     serve(SERVLET_PATH_INIT).with(InitServlet.class);
     serve(SERVLET_PATH_GET_SECRET).with(GetSecretServlet.class);
     serve(SERVLET_PATH_PUT_SECRET).with(PutSecretServlet.class);
