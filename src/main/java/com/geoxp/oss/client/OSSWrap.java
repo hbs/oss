@@ -40,15 +40,6 @@ public class OSSWrap {
     
     ByteArrayOutputStream data = new ByteArrayOutputStream();
     
-    //
-    // Write a nonce
-    //
-    
-    byte[] nonce = new byte[OSS.NONCE_BYTES];
-    CryptoHelper.getSecureRandom().nextBytes(nonce);
-    
-    data.write(nonce);
-    
     byte[] buf = new byte[1024];
     
     do {
@@ -67,6 +58,6 @@ public class OSSWrap {
     // Wrap data with retrieved secret
     //
     
-    System.out.println("Wrapped (" + OSS.NONCE_BYTES + " bytes nonce prefix) = " + new String(Hex.encode(CryptoHelper.wrapAES(secret, data.toByteArray()))));
+    System.out.println("Wrapped (" + OSS.NONCE_BYTES + " bytes nonce prefix) = " + new String(Hex.encode(CryptoHelper.wrapBlob(secret, data.toByteArray()))));
   }
 }

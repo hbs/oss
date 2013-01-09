@@ -18,11 +18,17 @@ package com.geoxp.oss;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
+import java.net.InetSocketAddress;
+import java.net.Socket;
+import java.net.SocketAddress;
+import java.net.SocketException;
 import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.KeyFactory;
@@ -44,6 +50,7 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
 import java.security.spec.RSAPublicKeySpec;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -188,9 +195,12 @@ public class CryptoHelper {
    * 
    * @param key AES wrapping key
    * @param data Data to wrap
+   * @param offset Where does the data start in 'data'
+   * @param len How long is the data
+   * @param nonce Should a random prefix be added to the data prior to wrapping
    * @return The wrapped data
    */
-  public static byte[] wrapAES(byte[] key, byte[] data, int offset, int len) {
+  public static byte[] wrapAES(byte[] key, byte[] data, int offset, int len, boolean nonce) {
     
     //
     // Initialize AES Wrap Engine for wrapping
@@ -200,6 +210,15 @@ public class CryptoHelper {
     KeyParameter keyparam = new KeyParameter(key);
     aes.init(true, keyparam);
 
+    if (nonce) {
+      byte[] nonced = new byte[data.length + OSS.NONCE_BYTES];
+      byte[] noncebytes = new byte[OSS.NONCE_BYTES];
+      getSecureRandom().nextBytes(noncebytes);
+      System.arraycopy(noncebytes, 0, nonced, 0, OSS.NONCE_BYTES);
+      System.arraycopy(data, 0, nonced, OSS.NONCE_BYTES, data.length);
+      data = nonced;
+    }
+    
     //
     // Pad the data on an 8 bytes boundary
     //
@@ -214,7 +233,11 @@ public class CryptoHelper {
   }
 
   public static byte[] wrapAES(byte[] key, byte[] data) {
-    return wrapAES(key, data, 0, data.length);
+    return wrapAES(key, data, 0, data.length, false);
+  }
+  
+  public static byte[] wrapBlob(byte[] key, byte[] blob) {
+    return wrapAES(key, blob, 0, blob.length, true);
   }
   
   /**
@@ -224,7 +247,7 @@ public class CryptoHelper {
    * @param data Wrapped data
    * @return The unwrapped data or null if an error occurred
    */
-  public static byte[] unwrapAES(byte[] key, byte[] data) {
+  public static byte[] unwrapAES(byte[] key, byte[] data, boolean hasnonce) {
     
     //
     // Initialize the AES Wrap Engine for unwrapping
@@ -239,12 +262,30 @@ public class CryptoHelper {
     //
     
     try {
-      return unpadPKCS7(aes.unwrap(data, 0, data.length));
+      byte[] unpadded = unpadPKCS7(aes.unwrap(data, 0, data.length));
+      
+      //
+      // Remove nonce if data has one
+      //
+      
+      if (hasnonce) {
+        return Arrays.copyOfRange(unpadded, OSS.NONCE_BYTES, unpadded.length);
+      } else {
+        return unpadded;
+      }
     } catch (InvalidCipherTextException icte) {
       return null;
     }
   }
   
+  public static byte[] unwrapAES(byte[] key, byte[] data) {
+    return unwrapAES(key, data, false);
+  }
+  
+  public static byte[] unwrapBlob(byte[] key, byte[] blob) {
+    return unwrapAES(key, blob, true);
+  }
+    
   /**
    * Encrypt data using RSA.
    * CAUTION: this can take a while on large data
@@ -884,7 +925,27 @@ public class CryptoHelper {
     //private static final int AGENTC_REMOVE_IDENTITY       = 18;
     //private static final int AGENTC_REMOVE_ALL_IDENTITIES = 19;
 
+    private static boolean hasJUDS = false;
+    
+    static {      
+      try {
+        Class c = Class.forName("com.etsy.net.UnixDomainSocket");
+        hasJUDS = true;
+      } catch (Throwable t) {
+        hasJUDS = false;
+      } finally {
+        if (!hasJUDS) {
+          System.err.println("No JUDS support, please use -Djuds.in=... -Djuds.out=... or -Djuds.addr=... -Djuds.port=...");
+        }
+      }
+    }
+    
     private UnixDomainSocketClient socket = null;
+    
+    private Socket sock = null;
+    
+    private InputStream in = null;
+    private OutputStream out = null;
     
     private ByteArrayOutputStream buffer = null;
 
@@ -926,13 +987,27 @@ public class CryptoHelper {
      * @param path Path to the Unix domain socket to use.
      * @throws IOException In case of errors
      */
-    public SSHAgentClient(String path) throws IOException {
-      //
-      // Connect to the local socket of the SSH agent
-      //
-    
-      socket = new UnixDomainSocketClient(path, JUDS.SOCK_STREAM);
-      
+    public SSHAgentClient(String path) throws IOException {      
+      if (null != System.getProperty("juds.in") && null != System.getProperty("juds.out")) {
+        in = new FileInputStream(System.getProperty("juds.in"));
+        out = new FileOutputStream(System.getProperty("juds.out"));
+      } else if (null != System.getProperty("juds.addr") && null != System.getProperty("juds.port")) {
+        sock = new Socket();
+        SocketAddress endpoint = new InetSocketAddress(System.getProperty("juds.addr"), Integer.valueOf(System.getProperty("juds.port")));
+        sock.connect(endpoint);
+        in = sock.getInputStream();
+        out = sock.getOutputStream();
+      } else if (hasJUDS) {
+        //
+        // Connect to the local socket of the SSH agent
+        //      
+        socket = new UnixDomainSocketClient(path, JUDS.SOCK_STREAM);
+        in = socket.getInputStream();
+        out = socket.getOutputStream();
+      } else {        
+        throw new RuntimeException("No JUDS Support, use -Djuds.in=... -Djuds.out=... or -Djuds.addr=... -Djuds.port=...");
+      }
+            
       //
       // Create an input buffer for data exchange with the socket
       //
@@ -941,7 +1016,23 @@ public class CryptoHelper {
     }
     
     public void close() {
-      socket.close();
+      if (null != sock) {
+        try {
+          sock.close();
+        } catch (IOException ioe) {            
+        }
+      } else if (null != socket) {
+        socket.close();
+      } else {
+        try {
+          in.close();
+        } catch (IOException ioe) {          
+        }
+        try {
+          out.close();
+        } catch (IOException ioe) {
+        }          
+      }
     }
     
     /**
@@ -983,8 +1074,8 @@ public class CryptoHelper {
       // Write request packet onto the socket
       //
       
-      socket.getOutputStream().write(packet);
-      socket.getOutputStream().flush();
+      out.write(packet);
+      out.flush();
     }
        
     /**
@@ -1003,7 +1094,7 @@ public class CryptoHelper {
           
       while(true) {
         
-        int len = socket.getInputStream().read(buf);
+        int len = in.read(buf);
         
         //
         // Add data to buffer

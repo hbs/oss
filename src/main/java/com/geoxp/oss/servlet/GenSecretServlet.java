@@ -91,7 +91,7 @@ public class GenSecretServlet extends HttpServlet {
     // Generate secret (and nonce)
     //
     
-    byte[] secret = new byte[OSS.NONCE_BYTES + 32];
+    byte[] secret = new byte[32];
     
     CryptoHelper.getSecureRandom().nextBytes(secret);
     
@@ -99,7 +99,7 @@ public class GenSecretServlet extends HttpServlet {
     // Wrap with master key
     //
     
-    byte[] wrappedsecret = CryptoHelper.wrapAES(OSS.getMasterSecret(), secret);
+    byte[] wrappedsecret = CryptoHelper.wrapBlob(OSS.getMasterSecret(), secret);
     
     try {
       OSS.getKeyStore().putSecret(new String(osstoken.getSecret(), "UTF-8"), wrappedsecret);

@@ -22,7 +22,6 @@ import java.net.URI;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,7 +49,6 @@ import com.geoxp.oss.CryptoHelper;
 import com.geoxp.oss.CryptoHelper.SSHAgentClient;
 import com.geoxp.oss.CryptoHelper.SSHAgentClient.SSHKey;
 import com.geoxp.oss.MasterSecretGenerator;
-import com.geoxp.oss.OSS;
 import com.geoxp.oss.OSSException;
 import com.geoxp.oss.servlet.GuiceServletModule;
 import com.google.gson.JsonElement;
@@ -818,31 +816,6 @@ public class OSSClient {
       if (null != agent) {
         agent.close();
       }
-    }
-  }
-  
-  /**
-   * Unwrap data wrapped using OSSWrap.
-   * 
-   * @param key Key to use for unwrapping.
-   * @param data Wrapped data
-   * @return The unwrapped data.
-   */
-  public static byte[] OSSUnwrap(byte[] key, byte[] data) throws OSSException {
-    //
-    // Unwrap data
-    //
-    
-    byte[] unwrapped = CryptoHelper.unwrapAES(key, data);
-    
-    //
-    // Remove nonce and return result
-    //
-    
-    if (data.length > OSS.NONCE_BYTES) {
-      return Arrays.copyOfRange(unwrapped, OSS.NONCE_BYTES, unwrapped.length);
-    } else {
-      throw new OSSException("Data is shorter than the size of nonce, probably not wrapped using OSS.");
     }
   }
 }

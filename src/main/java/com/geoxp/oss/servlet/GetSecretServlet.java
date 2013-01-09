@@ -104,7 +104,7 @@ public class GetSecretServlet extends HttpServlet {
     // Unwrap secret
     //
     
-    secret = CryptoHelper.unwrapAES(OSS.getMasterSecret(), secret);
+    secret = CryptoHelper.unwrapBlob(OSS.getMasterSecret(), secret);
    
     if (null == secret) {
       LOGGER.error("[" + new String(Hex.encode(CryptoHelper.sshKeyBlobFingerprint(osstoken.getKeyblob()))) + "] failed to retrieve secret '" + new String(secretname, "UTF-8") + "', integrity check failed.");
@@ -119,7 +119,7 @@ public class GetSecretServlet extends HttpServlet {
     byte[] wrappingkey = new byte[32];
     CryptoHelper.getSecureRandom().nextBytes(wrappingkey);
     
-    secret = CryptoHelper.wrapAES(wrappingkey, secret, OSS.NONCE_BYTES, secret.length - OSS.NONCE_BYTES);
+    secret = CryptoHelper.wrapAES(wrappingkey, secret, OSS.NONCE_BYTES, secret.length - OSS.NONCE_BYTES, false);
         
     //
     // Seal wrapping key with provided RSA pub key

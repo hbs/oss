@@ -1,6 +1,5 @@
 package com.geoxp.oss.servlet;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 import javax.servlet.ServletException;
@@ -104,22 +103,11 @@ public class PutSecretServlet extends HttpServlet {
     }
     
     //
-    // Add nonce to secret prior to wrapping
-    //
-    
-    byte[] nonce = new byte[OSS.NONCE_BYTES];
-    CryptoHelper.getSecureRandom().nextBytes(nonce);
-    
-    ByteArrayOutputStream nonced = new ByteArrayOutputStream();
-    nonced.write(nonce);
-    nonced.write(secret);
-    
-    //
     // Attempt to store secret
     //
         
     try {          
-      OSS.getKeyStore().putSecret(new String(secretname, "UTF-8"), CryptoHelper.wrapAES(OSS.getMasterSecret(), nonced.toByteArray()));
+      OSS.getKeyStore().putSecret(new String(secretname, "UTF-8"), CryptoHelper.wrapBlob(OSS.getMasterSecret(), secret));
       LOGGER.info("[" + new String(Hex.encode(CryptoHelper.sshKeyBlobFingerprint(osstoken.getKeyblob()))) + "] stored " + secret.length + " bytes as secret '" + secretname + "'");
     } catch (OSSException e) {
       LOGGER.error("doPost", e);
