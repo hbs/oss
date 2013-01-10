@@ -116,6 +116,10 @@ public class CryptoHelper {
     } catch (NoSuchProviderException nspe) {
     } catch (NoSuchAlgorithmException nsae) {      
     }
+    
+    if (null == sr) {
+      sr = new SecureRandom();
+    }
   }
 
   public static SecureRandom getSecureRandom() {
@@ -583,7 +587,9 @@ public class CryptoHelper {
       // Encode parameters as Network Strings
       //
       
-      byte[] tns = encodeNetworkString(SSH_RSA_PREFIX.getBytes());
+      byte[] tns = null;
+
+      try { tns = encodeNetworkString(SSH_RSA_PREFIX.getBytes("UTF-8")); } catch (UnsupportedEncodingException uee) {}
       byte[] ens = encodeNetworkString(e.toByteArray());
       byte[] nns = encodeNetworkString(n.toByteArray());
       
@@ -617,7 +623,8 @@ public class CryptoHelper {
       // Encode parameters as network strings
       //
       
-      byte[] tns = encodeNetworkString(SSH_DSS_PREFIX.getBytes());
+      byte[] tns = null;
+      try { tns = encodeNetworkString(SSH_DSS_PREFIX.getBytes("UTF-8")); } catch (UnsupportedEncodingException uee) {}
       byte[] pns = encodeNetworkString(p.toByteArray());
       byte[] qns = encodeNetworkString(q.toByteArray());
       byte[] gns = encodeNetworkString(g.toByteArray());
@@ -672,7 +679,8 @@ public class CryptoHelper {
         // Build the SSH sigBlob
         //
         
-        byte[] tns = encodeNetworkString(SSH_RSA_PREFIX.getBytes());
+        byte[] tns = null;
+        try { encodeNetworkString(SSH_RSA_PREFIX.getBytes("UTF-8")); } catch (UnsupportedEncodingException uee) {}
         byte[] sns = encodeNetworkString(sig);
         
         byte[] blob = new byte[tns.length + sns.length];
@@ -707,7 +715,8 @@ public class CryptoHelper {
         System.arraycopy(asn1sig, 4 + frst, sshsig, 0, 20);
         System.arraycopy(asn1sig, 6 + asn1sig[3] + scnd, sshsig, 20, 20);
 
-        byte[] tns = encodeNetworkString(SSH_DSS_PREFIX.getBytes());
+        byte[] tns = null;
+        try { tns = encodeNetworkString(SSH_DSS_PREFIX.getBytes("UTF-8")); } catch (UnsupportedEncodingException uee) {}
         byte[] sns = encodeNetworkString(sshsig);
         
         byte[] blob = new byte[tns.length + sns.length];
