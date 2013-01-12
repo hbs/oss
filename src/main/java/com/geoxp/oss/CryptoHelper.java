@@ -215,12 +215,14 @@ public class CryptoHelper {
     aes.init(true, keyparam);
 
     if (nonce) {
-      byte[] nonced = new byte[data.length + OSS.NONCE_BYTES];
+      byte[] nonced = new byte[len + OSS.NONCE_BYTES];
       byte[] noncebytes = new byte[OSS.NONCE_BYTES];
       getSecureRandom().nextBytes(noncebytes);
       System.arraycopy(noncebytes, 0, nonced, 0, OSS.NONCE_BYTES);
-      System.arraycopy(data, 0, nonced, OSS.NONCE_BYTES, data.length);
+      System.arraycopy(data, offset, nonced, OSS.NONCE_BYTES, len);
       data = nonced;
+      offset = 0;
+      len = data.length;
     }
     
     //
