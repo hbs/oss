@@ -83,7 +83,7 @@ public class GenSecretServlet extends HttpServlet {
     
     if (!OSS.checkGenSecretSSHKey(osstoken.getKeyblob())) {
       LOGGER.error("[" + new String(Hex.encode(CryptoHelper.sshKeyBlobFingerprint(osstoken.getKeyblob()))) + "] (unauthorized) attempted to generate secret '" + new String(osstoken.getSecret(), "UTF-8") + "'.");
-      resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "SSH Key cannot generate a new secret.");
+      resp.sendError(HttpServletResponse.SC_FORBIDDEN, "SSH Key cannot generate a new secret.");
       return;
     }
     

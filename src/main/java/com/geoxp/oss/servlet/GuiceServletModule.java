@@ -25,6 +25,10 @@ public class GuiceServletModule extends ServletModule {
   public static final String SERVLET_PATH_GEN_SECRET = "/GenSecret";
   public static final String SERVLET_PATH_PUT_SECRET = "/PutSecret";
   public static final String SERVLET_PATH_GET_OSS_RSA = "/GetOSSRSA";
+  public static final String SERVLET_PATH_ADD_ACL = "/AddACL";
+  public static final String SERVLET_PATH_GET_ACL = "/GetACL";
+  public static final String SERVLET_PATH_REMOVE_ACL = "/RemoveACL";
+  
   
   @Override
   protected void configureServlets() {
@@ -33,5 +37,8 @@ public class GuiceServletModule extends ServletModule {
     serve(SERVLET_PATH_PUT_SECRET).with(PutSecretServlet.class);
     serve(SERVLET_PATH_GEN_SECRET).with(GenSecretServlet.class);
     serve(SERVLET_PATH_GET_OSS_RSA).with(GetOSSRSAServlet.class);
+    serve(SERVLET_PATH_ADD_ACL).with(AddACLServlet.class);
+    serve(SERVLET_PATH_REMOVE_ACL).with(RemoveACLServlet.class);
+    serve(SERVLET_PATH_GET_ACL).with(GetACLServlet.class);
   }
 }

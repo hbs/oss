@@ -16,6 +16,9 @@
 
 package com.geoxp.oss;
 
+import java.io.File;
+import java.io.IOException;
+
 public abstract class KeyStore {
   /**
    * Retrieve a secret
@@ -34,6 +37,15 @@ public abstract class KeyStore {
    * @throws OSSException if an error occurred
    */
   public abstract void putSecret(String name, byte[] secret) throws OSSException;
+  
+  /**
+   * Return the File of the ACL associated with the secret.
+   * 
+   * @param name
+   * @return
+   * @throws OSSException
+   */
+  public abstract File getACLFile(String name) throws IOException, OSSException;
   
   /**
    * Sanitize secret name

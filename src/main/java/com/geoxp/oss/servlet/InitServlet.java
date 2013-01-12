@@ -101,7 +101,7 @@ public class InitServlet extends HttpServlet {
     
     if (!OSS.checkInitSSHKey(osstoken.getKeyblob())) {
       LOGGER.error("[" + new String(Hex.encode(CryptoHelper.sshKeyBlobFingerprint(osstoken.getKeyblob()))) + "] (unauthorized) attempted to initialize Open Secret Server.");
-      resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "SSH signing key is not authorized to initialize this Open Secret Server.");
+      resp.sendError(HttpServletResponse.SC_FORBIDDEN, "SSH signing key is not authorized to initialize this Open Secret Server.");
       return;
     }
     

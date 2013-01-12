@@ -25,6 +25,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.Reader;
+import java.io.StringReader;
 
 
 public class DirectoryHierarchyKeyStore extends KeyStore {
@@ -55,7 +57,7 @@ public class DirectoryHierarchyKeyStore extends KeyStore {
       File root = getSecretFile(name);
       
       File secretFile = new File(root.getAbsolutePath() + ".secret");
-      File aclFile = getACLFile(name);
+      File aclFile = findACLFile(name);
       
       //
       // Check if secret exists
@@ -79,8 +81,30 @@ public class DirectoryHierarchyKeyStore extends KeyStore {
       
       boolean authorized = false;
       
+      Reader reader;
+      
+      if (!OSS.hasSecureACLs()) {
+        reader = new FileReader(aclFile);
+      } else {
+        //
+        // Read ACL blob and unwrap it
+        //
+        InputStream in = new FileInputStream(aclFile);
+        byte[] buf = new byte[1024];
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        while(true) {
+          int len = in.read(buf);
+          if (len < 0) {
+            break;
+          }
+          baos.write(buf, 0, len);
+        }
+        in.close();
+        reader = new StringReader(new String(CryptoHelper.unwrapBlob(OSS.getMasterSecret(), baos.toByteArray()), "UTF-8"));
+      }
+      
       try {
-        BufferedReader br = new BufferedReader(new FileReader(aclFile));
+        BufferedReader br = new BufferedReader(reader);
         
         while(true) {
           String line = br.readLine();
@@ -207,13 +231,20 @@ public class DirectoryHierarchyKeyStore extends KeyStore {
     return f;
   }
   
+  @Override
+  public File getACLFile(String name) throws IOException, OSSException {
+    File path = getSecretFile(name);
+    
+    return new File(path.getCanonicalPath() + ".acl");
+  }
+  
   /**
    * Determine the ACL file to use for a given secret
    * 
    * @param name Name of secret
    * @return File of ACLs or null if none is suitable
    */
-  private File getACLFile(String name) throws IOException, OSSException {
+  private File findACLFile(String name) throws IOException, OSSException {
     File path = getSecretFile(name);
     
     while (!path.equals(this.directory)) {

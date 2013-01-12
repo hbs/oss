@@ -37,6 +37,12 @@
   </context-param>
      
   <context-param>    
+   <description>Comma separated list of SSH key fingerprints that can modify ACLs</description>
+   <param-name>oss.acl.sshkeys</param-name>
+   <param-value>46:94:d7:......:26:d9:ac</param-value>
+  </context-param>
+     
+  <context-param>    
    <description>Root directory under which secrets are stored</description>
    <param-name>oss.keystore.dir</param-name>
    <param-value>/var/tmp/oss.keystore.dir</param-value>

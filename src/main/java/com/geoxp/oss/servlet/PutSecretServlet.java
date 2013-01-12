@@ -88,7 +88,7 @@ public class PutSecretServlet extends HttpServlet {
     
     if (!OSS.checkPutSecretSSHKey(osstoken.getKeyblob())) {
       LOGGER.error("[" + new String(Hex.encode(CryptoHelper.sshKeyBlobFingerprint(osstoken.getKeyblob()))) + "] (unauthorized) attempted to store " + secret.length + " bytes as secret '" + secretname + "'");
-      resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "SSH Key cannot store a secret.");
+      resp.sendError(HttpServletResponse.SC_FORBIDDEN, "SSH Key cannot store a secret.");
       return;  
     }
 

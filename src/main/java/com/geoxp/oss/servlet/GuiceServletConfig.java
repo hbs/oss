@@ -47,6 +47,9 @@ public class GuiceServletConfig extends GuiceServletContextListener {
     String initsshkeys = System.getProperty(OSS.CONTEXT_PARAM_OSS_INIT_SSHKEYS);
     OSS.setInitSSHKeys(null != initsshkeys ? initsshkeys : servletContextEvent.getServletContext().getInitParameter(OSS.CONTEXT_PARAM_OSS_INIT_SSHKEYS));
 
+    String aclsshkeys = System.getProperty(OSS.CONTEXT_PARAM_OSS_ACL_SSHKEYS);
+    OSS.setACLSSHKeys(null != aclsshkeys ? aclsshkeys : servletContextEvent.getServletContext().getInitParameter(OSS.CONTEXT_PARAM_OSS_ACL_SSHKEYS));
+
     String keystoredir = System.getProperty(OSS.CONTEXT_PARAM_OSS_KEYSTORE_DIR);
     OSS.setKeyStoreDirectory(null != keystoredir ? keystoredir : servletContextEvent.getServletContext().getInitParameter(OSS.CONTEXT_PARAM_OSS_KEYSTORE_DIR));
     

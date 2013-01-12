@@ -63,6 +63,12 @@ public class OSS {
   public static final String CONTEXT_PARAM_OSS_INIT_SSHKEYS = "oss.init.sshkeys";
   
   /**
+   * Name of servlet context init parameter containing the list of SSH keys that can access ACLs
+   * If this parameter is set, secure ACLs are used.
+   */
+  public static final String CONTEXT_PARAM_OSS_ACL_SSHKEYS = "oss.acl.sshkeys";
+  
+  /**
    * Directory where secrets are stored
    */
   public static final String CONTEXT_PARAM_OSS_KEYSTORE_DIR = "oss.keystore.dir";
@@ -109,6 +115,11 @@ public class OSS {
    * Set of SSH key fingerprints which can store secrets
    */
   private static final Set<String> PUTSECRET_AUTHORIZED_SSHKEYS = new HashSet<String>();
+  
+  /**
+   * Set of SSH key fingerprints which can access ACLs
+   */
+  private static final Set<String> ACL_AUTHORIZED_SSHKEYS = new HashSet<String>();
   
   private static KeyStore KEYSTORE;
   
@@ -186,6 +197,10 @@ public class OSS {
     setSSHKeys(PUTSECRET_AUTHORIZED_SSHKEYS, keylist);
   }
   
+  public static void setACLSSHKeys(String keylist) {
+    setSSHKeys(ACL_AUTHORIZED_SSHKEYS, keylist);
+  }
+  
   private static void setSSHKeys(Set<String> keyset, String keylist) {
     if (null == keylist) {
       return;
@@ -214,6 +229,14 @@ public class OSS {
   
   public static boolean checkPutSecretSSHKey(byte[] keyblob) {
     return checkSSHKey(PUTSECRET_AUTHORIZED_SSHKEYS, keyblob);
+  }
+  
+  public static boolean checkACLSSHKey(byte[] keyblob) {
+    return checkSSHKey(ACL_AUTHORIZED_SSHKEYS, keyblob);
+  }
+  
+  public static boolean hasSecureACLs() {
+    return !ACL_AUTHORIZED_SSHKEYS.isEmpty();
   }
   
   private static boolean checkSSHKey(Set<String> keys, byte[] keyblob) {
