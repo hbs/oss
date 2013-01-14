@@ -60,7 +60,7 @@ import com.google.gson.JsonParser;
 
 public class OSSClient {
   
-  public static Map<String,String> genMasterSecret(List<String> pubrings, List<String> pgpkeyids, int k) throws OSSException {
+  public static Map<String,String> genMasterSecret(byte[] secret, List<String> pubrings, List<String> pgpkeyids, int k) throws OSSException {
     
     try {
       
@@ -105,7 +105,7 @@ public class OSSClient {
       // Generate the master secret
       //
       
-      Map<PGPPublicKey, byte[]> shares = MasterSecretGenerator.generate(keys, k);
+      Map<PGPPublicKey, byte[]> shares = MasterSecretGenerator.generate(secret, keys, k);
         
       //
       // Produce JSON output

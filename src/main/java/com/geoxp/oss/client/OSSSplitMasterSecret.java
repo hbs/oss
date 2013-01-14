@@ -24,10 +24,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-public class OSSGenMasterSecret {
+public class OSSSplitMasterSecret {
   public static void main(String[] args) throws Exception {
+    
     if (3 != args.length) {
-      System.err.println("Usage: OSSGenMasterSecret PATH_TO_PUBRINGS PGP_KEY_IDS K");
+      System.err.println("Usage: OSSSplitMasterSecret PATH_TO_PUBRINGS PGP_KEY_IDS K\nSecret to split (from previous OSSGenMasterSecret/OSSSplit with k=1) to be fed as stdin.");
       System.exit(1);
     }
     
@@ -66,7 +67,25 @@ public class OSSGenMasterSecret {
       pgppubrings.add(new String(baos.toByteArray(), "UTF-8"));
     }
 
-    Map<String,String> shares = OSSClient.genMasterSecret(null, pgppubrings, pgpkeyids, Integer.valueOf(args[2]));
+    //
+    // Read secret from stdin
+    //
+    
+    ByteArrayOutputStream secret = new ByteArrayOutputStream();
+    
+    do {
+      int len = System.in.read(buf);
+      
+      if (len < 0) {
+        break;
+      }
+      
+      secret.write(buf, 0, len);
+    } while (true);
+    
+    secret.close();
+
+    Map<String,String> shares = OSSClient.genMasterSecret(secret.toByteArray(), pgppubrings, pgpkeyids, Integer.valueOf(args[2]));
     
     for (Entry<String,String> entry: shares.entrySet()) {
       System.out.println();
