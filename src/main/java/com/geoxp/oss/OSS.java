@@ -28,9 +28,16 @@ import org.bouncycastle.crypto.generators.RSAKeyPairGenerator;
 import org.bouncycastle.crypto.params.RSAKeyGenerationParameters;
 import org.bouncycastle.crypto.params.RSAKeyParameters;
 import org.bouncycastle.util.encoders.Hex;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.geoxp.oss.client.OSSClient;
+import com.geoxp.oss.servlet.GetSecretServlet;
 
 public class OSS {
   
+  private static final Logger LOGGER = LoggerFactory.getLogger(OSS.class);  
+
   /**
    * Size of nonce to append to secrets prior to wrapping them. This is so
    * two identical secrets do not appear as identical secret files after wrapping.
@@ -151,6 +158,12 @@ public class OSS {
       public String getAlgorithm() { return "RSA"; }
       public BigInteger getPublicExponent() { return ((RSAKeyParameters) keypair.getPublic()).getExponent(); }
     };    
+
+    //
+    // Output log line with public key fingerprint
+    //
+
+    LOGGER.info("Use '-D" + OSSClient.OSS_RSA + "=" + SESSION_RSA_PUBLIC.getModulus() + ":" + SESSION_RSA_PUBLIC.getPublicExponent() + "' to ensure you're talking to this OSS instance when calling Init/PutSecret/ChangeACL.");
   }
   
   public static byte[] getMasterSecret() {

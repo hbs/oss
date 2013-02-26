@@ -52,6 +52,7 @@ import com.geoxp.oss.CryptoHelper;
 import com.geoxp.oss.CryptoHelper.SSHAgentClient;
 import com.geoxp.oss.CryptoHelper.SSHAgentClient.SSHKey;
 import com.geoxp.oss.MasterSecretGenerator;
+import com.geoxp.oss.OSS;
 import com.geoxp.oss.OSSException;
 import com.geoxp.oss.servlet.GuiceServletModule;
 import com.google.gson.JsonElement;
@@ -59,6 +60,11 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
 public class OSSClient {
+  
+  /**
+   * Name of property containing the OSS instance's RSA public key modulus and public exponent.
+   */
+  public static final String OSS_RSA = "oss.rsa";
   
   public static Map<String,String> genMasterSecret(byte[] secret, List<String> pubrings, List<String> pgpkeyids, int k) throws OSSException {
     
@@ -489,7 +495,7 @@ public class OSSClient {
         //
 
         RSAPublicKey pubkey = getOSSRSA(ossURL);
-
+        
         //
         // Build the initialization token
         //
@@ -1134,6 +1140,22 @@ public class OSSClient {
   }
 
   public static RSAPublicKey getOSSRSA(String ossURL) {
+    
+    if (null != System.getProperty(OSS_RSA)) {
+      final String[] tokens = System.getProperty(OSS_RSA).split(":");
+      
+      RSAPublicKey pubkey = new RSAPublicKey() {
+        public BigInteger getModulus() { return new BigInteger(tokens[0]); }
+        public String getFormat() { return "PKCS#8"; }
+        public byte[] getEncoded() { return null; }
+        public String getAlgorithm() { return "RSA"; }
+        public BigInteger getPublicExponent() { return new BigInteger(tokens[1]); }
+      };
+      
+      return pubkey;
+    } else {
+      System.err.println("Unsecure OSS Instance RSA public key retrieval, you're not protected from Man-In-The-Middle type attacks.");
+    }
     
     HttpClient httpclient = new DefaultHttpClient();
 
