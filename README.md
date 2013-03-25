@@ -1,5 +1,5 @@
-oss
-===
+# oss
+
 
 Open Secret Server
 
@@ -16,19 +16,18 @@ The dialogue with the SSH agent is established using the JUDS 0.94 library (see 
 
 Follow those steps to set up an OSS instance:
 
-1. Build OSS
+## 1. Build OSS
 
 gradle buildjuds
 gradle assemble
 
+## 2. Generate a master secret
 
-2. Generate a master secret
-
-2.1. Export your PGP keyring (we use gpg in the example below)
+### 2.1 Export your PGP keyring (we use gpg in the example below)
 
 gpg --export -a > pubring.gpg
 
-2.2. Identify the key ids with which you wish to encrypt the master secret. The keys MUST be capable of encryption (i.e. ElGamal or RSA).
+### 2.2 Identify the key ids with which you wish to encrypt the master secret. The keys MUST be capable of encryption (i.e. ElGamal or RSA).
 
 gpg --list-keys
 
@@ -38,7 +37,7 @@ sub   2048g/3812C9B7 2012-12-31
 
 in the above example, key ID '3812C9B7' can be used, but not '4E06E786'.
 
-2.3. Generate the master secret
+### 2.3 Generate the master secret
 
 First generate the master secret and encrypt it with a safety key. Do that on an unconnected machine you trust.
 
@@ -79,7 +78,7 @@ The output will contain N + 1 PGP messages. Each one should be given to the owne
 NOW DELETE xxxxxxxx.oss in a secure way (using 'srm') (make sure it has been put in a safe plave first...).
 
 
-3. Launch an OSS instance, we'll use the jettyRun task but feel free to deploy build/libs/oss.war in your favourite application server
+## 3. Launch an OSS instance, we'll use the jettyRun task but feel free to deploy build/libs/oss.war in your favourite application server
 
 You need to set the following system properties prior to launching OSS (or modify WEB-INF/web.xml).
 
@@ -94,7 +93,7 @@ oss.token.ttl		Delay in ms during which authentication tokens will be considered
 JAVA_OPTS="-Doss.keystore.dir=/var/tmp/oss-test -Doss.init.sshkeys=... -Doss.gensecret.sshkeys=... -Doss.putsecret.sshkeys=... -Doss.acl.sshkeys=..." gradle jettyRun
 
 
-4. Have K persons send their master secret split to OSS using the following command:
+## 4. Have K persons send their master secret split to OSS using the following command:
 
 The SSH keys of those K persons MUST be present in 'oss.init.sshkeys' and their SSH agent must be running and contain the matching private key.
 
@@ -107,53 +106,53 @@ The first K-1 persons should have an informative message stating that more secre
 The last person will have a message stating that the OSS was initialized successfully.
 
 
-5. Generate a new secret
+## 5. Generate a new secret
 
 java -cp build/libs/oss-client.jar com.geoxp.oss.client.OSSGenSecret OSS_URL foo.bar.mysecret
 
 
-6. Retrieve the ACLs for the secret
+## 6. Retrieve the ACLs for the secret
 
 java -cp build/libs/oss-client.jar com.geoxp.oss.client.OSSGetACL OSS_URL foo.bar.mysecret
 
 (ACLs should be empty)
 
 
-7. Add keys to the ACL for foo.bar.mysecret
+## 7. Add keys to the ACL for foo.bar.mysecret
 
 java -cp build/libs/oss-client.jar com.geoxp.oss.client.OSSAddACL OSS_URL foo.bar.mysecret SSH_FPR_1,SSH_FPR2,...
 
 You can later remove SSH fingerprints from ACLs using OSSRemoveACL instead of OSSAddACL.
 
 
-8. Retrieve secret
+## 8. Retrieve secret
 
 java -cp build/lib/oss-client.jar com.geoxp.oss.client.OSSGetSecret OSS_URL foo.bar.mysecret
 
 
-9. Put an external secret
+## 9. Put an external secret
 
 cat SUPER_SECRET_DATA|java -cp build/lib/oss-client.jar com.geoxp.oss.client.OSSPutSecret OSS_URL secret.name
 
 instead of being plaintext accessible via 'cat', data should have been encrypted using a PGP public key of a user listed in 'oss.putsecret.sshkeys'.
 
 
-10. Wrap secret data with a secret contained in OSS
+## 10. Wrap secret data with a secret contained in OSS
 
 cat SUPER_SECRET_DATA|java -cp build/lib/oss-client.jar com.geoxp.oss.client.OSSWrap OSS_URL foo.bar.mysecret
 
 instead of being plaintext accessible via 'cat', data should have been encrypted using a PGP public key of a user listed in 'oss.putsecret.sshkeys'.
 
 
-11. Rekeying OSS secrets
+## 11. Rekeying OSS secrets
 
 In case you have a doubt concerning the secrecy of the master secret generated at step 2, you need to generate a new one and rekey all secrets and ACLs currently managed by your OSS instance.
 
-11.1 Copy all data under 'oss.keystore.dir' on a machine you will disconnect from any network.
+### 11.1 Copy all data under 'oss.keystore.dir' on a machine you will disconnect from any network.
 
-11.2 Generate a new master secret and have the xxxxxxxx.oss files of both the new and current master secrets handy on the machine you used at 11.1
+### 11.2 Generate a new master secret and have the xxxxxxxx.oss files of both the new and current master secrets handy on the machine you used at 11.1
 
-11.3 On this machine run:
+### 11.3 On this machine run:
 
 mkfifo -m 0600 current-master
 mkfifo -m 0600 new-master
