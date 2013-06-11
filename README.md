@@ -71,7 +71,7 @@ Put this in a VERY SAFE place, this should only be used when rekeying the OSS in
 
 The secret should now be split among N persons with K splits needed to initialize the OSS instance.
 
-	gpg -d xxxxxxxx.oss | java -cp build/libs/oss-client.jar com.geoxp.oss.client.OSSSplit ./pubring.gpg hhhhhhhh0,hhhhhhhh1,....,hhhhhhhhN K
+	gpg -d xxxxxxxx.oss | java -cp build/libs/oss-client.jar com.geoxp.oss.client.OSSSplitMasterSecret ./pubring.gpg hhhhhhhh0,hhhhhhhh1,....,hhhhhhhhN K
 
 The output will contain N + 1 PGP messages. Each one should be given to the owner of the matching key.
 
