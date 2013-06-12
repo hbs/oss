@@ -1274,8 +1274,11 @@ public class CryptoHelper {
     /**
      * Add an identity to the agent
      * 
+     * @param keyblob SSH key blob
+     * @param comment A comment to describe the identity
+     * @return true if the identity has been succesfully loaded 
      */
-    public Boolean addIdentity(byte[] keyblob, String comment) throws IOException {
+    public (Boolean) addIdentity(byte[] keyblob, String comment) throws IOException {
       ByteArrayOutputStream request = new ByteArrayOutputStream();
 
       request.write(keyblob);
