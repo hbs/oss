@@ -32,13 +32,14 @@ public class OSSSshAgentAddIdentity {
       return Arrays.copyOf(password, password.length);
     }
   } 
+  
+  final static String[] SSH_DEFAULT_KEY_FILENAMES = {"id_dsa", "id_rsa" };
 
   private static List<File> getDefaultsKeyFiles() {
     String sshDir = System.getProperty("user.home") + File.separator + ".ssh";
-    String[] sshKeyFilenames = {"id_dsa", "id_ecdsa", "id_rsa" };
     ArrayList<File> result = new ArrayList<File>();
 
-    for (String sshKeyFilename : sshKeyFilenames) {
+    for (String sshKeyFilename : SSH_DEFAULT_KEY_FILENAMES) {
       File file = new File(sshDir, sshKeyFilename);
       if (file.canRead()) {
         result.add(file);
