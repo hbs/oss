@@ -569,20 +569,20 @@ public class CryptoHelper {
   }
   
   /**
-   * Encode a public key as an SSH Key Blob
+   * Encode a key pair as an SSH Key Blob
    * 
-   * @param key Public key to encode
+   * @param kp Public/private key pair to encode
    * @return The encoded public key or null if provided key is not RSA or DSA
    */
-  public static byte[] sshKeyBlobFromPrivateKey(KeyPair key) {
-    if (key.getPrivate() instanceof RSAPrivateKey) {
+  public static byte[] sshKeyBlobFromKeyPair(KeyPair kp) {
+    if (kp.getPrivate() instanceof RSAPrivateKey) {
       //
       // Extract key parameters
       //
 
-      BigInteger n = ((RSAPublicKey) key.getPublic()).getModulus();
-      BigInteger e = ((RSAPublicKey) key.getPublic()).getPublicExponent();
-      BigInteger d = ((RSAPrivateKey) key.getPrivate()).getPrivateExponent();
+      BigInteger n = ((RSAPublicKey) kp.getPublic()).getModulus();
+      BigInteger e = ((RSAPublicKey) kp.getPublic()).getPublicExponent();
+      BigInteger d = ((RSAPrivateKey) kp.getPrivate()).getPrivateExponent();
 
       // Not available and not used by ssh-agent anyway ...
       BigInteger iqmp = new BigInteger("0");
@@ -617,16 +617,16 @@ public class CryptoHelper {
       System.arraycopy(qns, 0, blob, tns.length + nns.length + ens.length + dns.length + iqmpns.length + pns.length, qns.length);
 
       return blob;
-    } else  if (key.getPrivate() instanceof DSAPrivateKey) {
+    } else  if (kp.getPrivate() instanceof DSAPrivateKey) {
       //
       // Extract key parameters
       //
 
-      BigInteger p = ((DSAPublicKey) key.getPublic()).getParams().getP();
-      BigInteger q = ((DSAPublicKey) key.getPublic()).getParams().getQ();
-      BigInteger g = ((DSAPublicKey) key.getPublic()).getParams().getG();
-      BigInteger y = ((DSAPublicKey) key.getPublic()).getY();
-      BigInteger x = ((DSAPrivateKey) key.getPrivate()).getX();
+      BigInteger p = ((DSAPublicKey) kp.getPublic()).getParams().getP();
+      BigInteger q = ((DSAPublicKey) kp.getPublic()).getParams().getQ();
+      BigInteger g = ((DSAPublicKey) kp.getPublic()).getParams().getG();
+      BigInteger y = ((DSAPublicKey) kp.getPublic()).getY();
+      BigInteger x = ((DSAPrivateKey) kp.getPrivate()).getX();
 
       //
       // Encode parameters as network strings
