@@ -585,9 +585,9 @@ public class CryptoHelper {
       BigInteger d = ((RSAPrivateKey) kp.getPrivate()).getPrivateExponent();
 
       // Not available and not used by ssh-agent anyway ...
-      BigInteger iqmp = new BigInteger("0");
-      BigInteger p = new BigInteger("0");
-      BigInteger q = new BigInteger("0");
+      BigInteger iqmp = BigInteger.ZERO;
+      BigInteger p = BigInteger.ZERO;
+      BigInteger q = BigInteger.ZERO;
 
       byte[] tns = null;
       try { tns = encodeNetworkString(SSH_RSA_PREFIX.getBytes("UTF-8")); } catch (UnsupportedEncodingException uee) {}
