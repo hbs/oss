@@ -1278,7 +1278,7 @@ public class CryptoHelper {
      * @param comment A comment to describe the identity
      * @return true if the identity has been succesfully loaded 
      */
-    public (Boolean) addIdentity(byte[] keyblob, String comment) throws IOException {
+    public boolean addIdentity(byte[] keyblob, String comment) throws IOException {
       ByteArrayOutputStream request = new ByteArrayOutputStream();
 
       request.write(keyblob);
@@ -1289,11 +1289,11 @@ public class CryptoHelper {
       return (Boolean) awaitResponse(new AgentCallback() {
         @Override
         public Object onFailure(byte[] packet) {
-          return Boolean.FALSE;
+          return false;
         }
         @Override
         public Object onSuccess(byte[] packet) {             
-          return Boolean.TRUE;
+          return true;
         }
       });
     }
