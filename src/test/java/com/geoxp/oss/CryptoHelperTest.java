@@ -324,7 +324,7 @@ public class CryptoHelperTest {
   }
   
   @Test
-  public void testSSHKeyBlobFroPublicKey_DSA() {
+  public void testSSHKeyBlobFromPublicKey_DSA() {
     String dsapubkey = "AAAAB3NzaC1kc3MAAACBAMCN5PhMDoTyfaxwAdBLyxt9QPPYKB36nfEdD/NxkeblbUHAVvTy9paesjHOzXaLFaGA7MIGOMK71OokmExothsxMNjA044TLwonwR/Uy25ig2LVpZlrlrJgrF64AV84Y6rO9UXW9WAwhuvp4a3qPX5hLdhro2a34fbOhUeWNbKvAAAAFQDD3f1U20+RA07jriYJMR8zROr8vQAAAIEArzx1ehDtiCB+gkSMzCl3eYHV7y23rmp524xgxrjL9xlboI2/L69zdpyGM9J+IVAYJARQ9fWKOfMATMu+bvuO2Q6TFvMg1NSEW8MzI+6YGKZt0+muC8gwTdogSrMA0Nh45BAigsU/tjSUYaRFUO/CbnLVulUe2O1Uta4CoraOpCEAAACBAKHWahSYbnDtepBX7tE/lNuAuHAU3Pr8pWHzXI6+SlioNhSEmclG+kr8cI0MXvAgWbKe4dR8ro9sFQY70LeBkdEbhiKOkZ7Tjt3KvxOSo5T727V2P7VuFVOqI7EDlYbysp4BeT5iB0k0qrKp+73qHSv1Py2tr0GAzIAkqufDU3Po";    
     PublicKey key = CryptoHelper.sshKeyBlobToPublicKey(Base64.decode(dsapubkey.getBytes()));
     String blob = new String(Base64.encode(CryptoHelper.sshKeyBlobFromPublicKey(key)));    
