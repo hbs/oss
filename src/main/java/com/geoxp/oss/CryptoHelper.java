@@ -575,92 +575,92 @@ public class CryptoHelper {
    * @return The encoded public key or null if provided key is not RSA or DSA
    */
   public static byte[] sshKeyBlobFromPrivateKey(KeyPair key) {
-	  if (key.getPrivate() instanceof RSAPrivateKey) {
-		  //
-		  // Extract key parameters
-		  //
+    if (key.getPrivate() instanceof RSAPrivateKey) {
+      //
+      // Extract key parameters
+      //
 
-		  BigInteger n = ((RSAPublicKey) key.getPublic()).getModulus();
-		  BigInteger e = ((RSAPublicKey) key.getPublic()).getPublicExponent();
-		  BigInteger d = ((RSAPrivateKey) key.getPrivate()).getPrivateExponent();
+      BigInteger n = ((RSAPublicKey) key.getPublic()).getModulus();
+      BigInteger e = ((RSAPublicKey) key.getPublic()).getPublicExponent();
+      BigInteger d = ((RSAPrivateKey) key.getPrivate()).getPrivateExponent();
 
-		  // Not available and not used by ssh-agent anyway ...
-		  BigInteger iqmp = new BigInteger("0");
-		  BigInteger p = new BigInteger("0");
-		  BigInteger q = new BigInteger("0");
+      // Not available and not used by ssh-agent anyway ...
+      BigInteger iqmp = new BigInteger("0");
+      BigInteger p = new BigInteger("0");
+      BigInteger q = new BigInteger("0");
 
-		  byte[] tns = null;
-		  try { tns = encodeNetworkString(SSH_RSA_PREFIX.getBytes("UTF-8")); } catch (UnsupportedEncodingException uee) {}
-		  byte[] nns = encodeNetworkString(n.toByteArray());
-		  byte[] ens = encodeNetworkString(e.toByteArray());
-		  byte[] dns = encodeNetworkString(d.toByteArray());
-		  byte[] iqmpns = encodeNetworkString(iqmp.toByteArray());
-		  byte[] pns = encodeNetworkString(p.toByteArray());
-		  byte[] qns = encodeNetworkString(q.toByteArray());
+      byte[] tns = null;
+      try { tns = encodeNetworkString(SSH_RSA_PREFIX.getBytes("UTF-8")); } catch (UnsupportedEncodingException uee) {}
+      byte[] nns = encodeNetworkString(n.toByteArray());
+      byte[] ens = encodeNetworkString(e.toByteArray());
+      byte[] dns = encodeNetworkString(d.toByteArray());
+      byte[] iqmpns = encodeNetworkString(iqmp.toByteArray());
+      byte[] pns = encodeNetworkString(p.toByteArray());
+      byte[] qns = encodeNetworkString(q.toByteArray());
 
-		  //
-		  // Allocate array for blob
-		  //
+      //
+      // Allocate array for blob
+      //
 
-		  byte[] blob = new byte[tns.length + nns.length + ens.length + dns.length + iqmpns.length + pns.length + qns.length];
+      byte[] blob = new byte[tns.length + nns.length + ens.length + dns.length + iqmpns.length + pns.length + qns.length];
 
-		  //
-		  // Copy network strings to blob
-		  //
+      //
+      // Copy network strings to blob
+      //
 
-		  System.arraycopy(tns, 0, blob, 0, tns.length);
-		  System.arraycopy(nns, 0, blob, tns.length, nns.length);
-		  System.arraycopy(ens, 0, blob, tns.length + nns.length, ens.length);
-		  System.arraycopy(dns, 0, blob, tns.length + nns.length + ens.length, dns.length);
-		  System.arraycopy(iqmpns, 0, blob, tns.length + nns.length + ens.length + dns.length, iqmpns.length);
-		  System.arraycopy(pns, 0, blob, tns.length + nns.length + ens.length + dns.length + iqmpns.length, pns.length);
-		  System.arraycopy(qns, 0, blob, tns.length + nns.length + ens.length + dns.length + iqmpns.length + pns.length, qns.length);
+      System.arraycopy(tns, 0, blob, 0, tns.length);
+      System.arraycopy(nns, 0, blob, tns.length, nns.length);
+      System.arraycopy(ens, 0, blob, tns.length + nns.length, ens.length);
+      System.arraycopy(dns, 0, blob, tns.length + nns.length + ens.length, dns.length);
+      System.arraycopy(iqmpns, 0, blob, tns.length + nns.length + ens.length + dns.length, iqmpns.length);
+      System.arraycopy(pns, 0, blob, tns.length + nns.length + ens.length + dns.length + iqmpns.length, pns.length);
+      System.arraycopy(qns, 0, blob, tns.length + nns.length + ens.length + dns.length + iqmpns.length + pns.length, qns.length);
 
-		  return blob;
-	  } else  if (key.getPrivate() instanceof DSAPrivateKey) {
-		  //
-		  // Extract key parameters
-		  //
+      return blob;
+    } else  if (key.getPrivate() instanceof DSAPrivateKey) {
+      //
+      // Extract key parameters
+      //
 
-		  BigInteger p = ((DSAPublicKey) key.getPublic()).getParams().getP();
-		  BigInteger q = ((DSAPublicKey) key.getPublic()).getParams().getQ();
-		  BigInteger g = ((DSAPublicKey) key.getPublic()).getParams().getG();
-		  BigInteger y = ((DSAPublicKey) key.getPublic()).getY();
-		  BigInteger x = ((DSAPrivateKey) key.getPrivate()).getX();
+      BigInteger p = ((DSAPublicKey) key.getPublic()).getParams().getP();
+      BigInteger q = ((DSAPublicKey) key.getPublic()).getParams().getQ();
+      BigInteger g = ((DSAPublicKey) key.getPublic()).getParams().getG();
+      BigInteger y = ((DSAPublicKey) key.getPublic()).getY();
+      BigInteger x = ((DSAPrivateKey) key.getPrivate()).getX();
 
-		  //
-		  // Encode parameters as network strings
-		  //
+      //
+      // Encode parameters as network strings
+      //
 
-		  byte[] tns = null;
-		  try { tns = encodeNetworkString(SSH_DSS_PREFIX.getBytes("UTF-8")); } catch (UnsupportedEncodingException uee) {}
-		  byte[] pns = encodeNetworkString(p.toByteArray());
-		  byte[] qns = encodeNetworkString(q.toByteArray());
-		  byte[] gns = encodeNetworkString(g.toByteArray());
-		  byte[] yns = encodeNetworkString(y.toByteArray());
-		  byte[] xns = encodeNetworkString(x.toByteArray());
+      byte[] tns = null;
+      try { tns = encodeNetworkString(SSH_DSS_PREFIX.getBytes("UTF-8")); } catch (UnsupportedEncodingException uee) {}
+      byte[] pns = encodeNetworkString(p.toByteArray());
+      byte[] qns = encodeNetworkString(q.toByteArray());
+      byte[] gns = encodeNetworkString(g.toByteArray());
+      byte[] yns = encodeNetworkString(y.toByteArray());
+      byte[] xns = encodeNetworkString(x.toByteArray());
 
-		  //
-		  // Allocate array for blob
-		  //
+      //
+      // Allocate array for blob
+      //
 
-		  byte[] blob = new byte[tns.length + pns.length + qns.length + gns.length + yns.length + xns.length];
+      byte[] blob = new byte[tns.length + pns.length + qns.length + gns.length + yns.length + xns.length];
 
-		  //
-		  // Copy network strings to blob
-		  //
+      //
+      // Copy network strings to blob
+      //
 
-		  System.arraycopy(tns, 0, blob, 0, tns.length);
-		  System.arraycopy(pns, 0, blob, tns.length, pns.length);
-		  System.arraycopy(qns, 0, blob, tns.length + pns.length, qns.length);
-		  System.arraycopy(gns, 0, blob, tns.length + pns.length + qns.length, gns.length);
-		  System.arraycopy(yns, 0, blob, tns.length + pns.length + qns.length + gns.length, yns.length);
-		  System.arraycopy(xns, 0, blob, tns.length + pns.length + qns.length + gns.length + yns.length, xns.length);
+      System.arraycopy(tns, 0, blob, 0, tns.length);
+      System.arraycopy(pns, 0, blob, tns.length, pns.length);
+      System.arraycopy(qns, 0, blob, tns.length + pns.length, qns.length);
+      System.arraycopy(gns, 0, blob, tns.length + pns.length + qns.length, gns.length);
+      System.arraycopy(yns, 0, blob, tns.length + pns.length + qns.length + gns.length, yns.length);
+      System.arraycopy(xns, 0, blob, tns.length + pns.length + qns.length + gns.length + yns.length, xns.length);
 
-		  return blob;
-	  } else {
-		  return null;    
-	  }
+      return blob;
+    } else {
+      return null;    
+    }
   }
 
   /**
@@ -1276,23 +1276,23 @@ public class CryptoHelper {
      * 
      */
     public Boolean addIdentity(byte[] keyblob, String comment) throws IOException {
-    	ByteArrayOutputStream request = new ByteArrayOutputStream();
-    	
-    	request.write(keyblob);
-    	request.write(encodeNetworkString(comment.getBytes()));
-    	    	
-    	sendRequest(AGENTC_ADD_IDENTITY, request.toByteArray());
-    	
-    	return (Boolean) awaitResponse(new AgentCallback() {
-            @Override
-            public Object onFailure(byte[] packet) {
-              return Boolean.FALSE;
-            }
-            @Override
-            public Object onSuccess(byte[] packet) {             
-              return Boolean.TRUE;
-            }
-          });
+      ByteArrayOutputStream request = new ByteArrayOutputStream();
+
+      request.write(keyblob);
+      request.write(encodeNetworkString(comment.getBytes()));
+
+      sendRequest(AGENTC_ADD_IDENTITY, request.toByteArray());
+
+      return (Boolean) awaitResponse(new AgentCallback() {
+        @Override
+        public Object onFailure(byte[] packet) {
+          return Boolean.FALSE;
+        }
+        @Override
+        public Object onSuccess(byte[] packet) {             
+          return Boolean.TRUE;
+        }
+      });
     }
 
     /**
