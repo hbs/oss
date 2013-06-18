@@ -64,7 +64,7 @@ public class OSSSshAgentAddIdentity {
     // FIXME ? Provide a way to specify the ssh signing key fingerprint
     byte[] secret = OSSClient.getSecret(args[0], args[1], null);
     // Use the secret to unwrap the passphrase
-    byte[] unwrap = CryptoHelper.unwrapAES(secret, Hex.decode(args[3]), true);
+    byte[] unwrap = CryptoHelper.unwrapBlob(secret, Hex.decode(args[3]));
     String password = new String(unwrap, "UTF-8");
 
     // Read private keys
