@@ -99,7 +99,7 @@ public class OSSSshAgentAddIdentity {
       pem.close();
     }
 
-    System.out.println("Keys in agent :");
+    System.out.println("Keys in agent:");
     List<SSHKey> identities = sshAgent.requestIdentities();
     for (SSHKey identity : identities) {
       System.out.println(identity);
