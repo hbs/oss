@@ -60,15 +60,15 @@ public class OSSSshAgentAddIdentity {
 
     SSHAgentClient sshAgent = new SSHAgentClient(args[2]);
 
-    /* Get the secret from OSS */
-    /* FIXME ? Provide a way to specify the ssh signing key fingerprint */
+    // Get the secret from OSS
+    // FIXME ? Provide a way to specify the ssh signing key fingerprint
     byte[] secret = OSSClient.getSecret(args[0], args[1], null);
     // Use the secret to unwrap the passphrase
     byte[] unwrap = CryptoHelper.unwrapAES(secret, Hex.decode(args[3]), true);
     String password = new String(unwrap, "UTF-8");
 
-    /* Read private keys */
-    /* openssh store it in PEM format */		
+    // Read private keys
+    // openssh store it in PEM format		
     List<File> sshKeyFiles;
     if (args.length > 4) {
       sshKeyFiles = new ArrayList<File>(1);
@@ -86,7 +86,7 @@ public class OSSSshAgentAddIdentity {
         while ((o = pem.readObject()) != null) {
           if (o instanceof KeyPair) {
             KeyPair kp = (KeyPair) o;
-            /* Add the identity in the ssh-agent */
+            // Add the identity in the ssh-agent
             byte[] keyblob = CryptoHelper.sshKeyBlobFromKeyPair(kp);
             System.out.println("Loading " + sshKeyFile.getPath());
             sshAgent.addIdentity(keyblob, sshKeyFile.getPath());
