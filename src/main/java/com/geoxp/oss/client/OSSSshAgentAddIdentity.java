@@ -87,7 +87,7 @@ public class OSSSshAgentAddIdentity {
           if (o instanceof KeyPair) {
             KeyPair kp = (KeyPair) o;
             // Add the identity in the ssh-agent
-            byte[] keyblob = CryptoHelper.sshKeyBlobFromKeyPair(kp);
+            byte[] keyblob = CryptoHelper.sshPrivateKeyBlobFromKeyPair(kp);
             System.out.println("Loading " + sshKeyFile.getPath());
             sshAgent.addIdentity(keyblob, sshKeyFile.getPath());
           }

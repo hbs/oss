@@ -342,7 +342,7 @@ public class CryptoHelperTest {
     PrivateKey privkey = keyFactory.generatePrivate(new RSAPrivateKeySpec(modulus, privateExponent));
     KeyPair kp = new KeyPair(pubkey,privkey);
 
-    byte[] blob = CryptoHelper.sshKeyBlobFromKeyPair(kp);
+    byte[] blob = CryptoHelper.sshPrivateKeyBlobFromKeyPair(kp);
 
     byte[] referenceBlob = Base64.decode("AAAAB3NzaC1yc2EAAAEBAMvst6IT0ewQxA+HxEEe6Y9fjTLEyUCdkQkEpB50RIErU5n6i/CbNgFPcUxm5dKm6ViOjlECAD8wftKf3Zv4QAZ9M6gILeV1A7mEYShmS5GBgYrZNpLADz3h5k2EVCOdKghrPh/heUubr3LjURDC0Fh0P6JjQ4NHCx7throD5G2Wnsi8rC8kjfzS0mVI7KOCvv27V3uAHv82rPYF+5CPJJCD0//4z8HgryaCaOErrDiFC1G18kMyPA120mkfLpiYTo0pBsd5IeoJy9vDPdM5RD+OiIhfvoYKtSJWX7wzfbAqQgNzt3X8icq64XcPouzH6QPuUZwaRXd/9uVsGjAymcsAAAADAQABAAABAQDDlrXCZJQxgRsrciKP+yA0/YamLQyCRx52sdbfxtB1u6KhyycxjQzNUO7wQrknxCOHZqOlmu+1q8PYLLEXCZIPJ0LGZaHvtL3vz8KIRyUv2DDxhcjMFB4KUoLb0pII3pMUJBgf59i45gfvf4ufMds3G7h0/hQg86D89wEDpPwRBnDNnFKotb0eoziFzeA/vybG+qguWODI0vhH4kmDwJtxO66LnOhLj6gCYSwCjLDwV0iFeKlccW3YGmsTo7dgiHWvqEsGIXySC3N89JleBNRNOej+PJFQynVLsi0tsnaqEDAwPuTRkBqX06+3FDO/vK79BFFsSyGUNrRcNzc3lUhRAAAAAQAAAAABAAAAAAEA");
 
@@ -361,7 +361,7 @@ public class CryptoHelperTest {
     PrivateKey privkey = keyFactory.generatePrivate(new DSAPrivateKeySpec(x, p, q, g));
     KeyPair kp = new KeyPair(pubkey,privkey);
 
-    byte[] blob = CryptoHelper.sshKeyBlobFromKeyPair(kp);
+    byte[] blob = CryptoHelper.sshPrivateKeyBlobFromKeyPair(kp);
 
     byte[] referenceBlob = Base64.decode("AAAAB3NzaC1kc3MAAACBAPknKXHMfzFPyMk2xPRXlIViDzltWEhQoJLzudXPihF7T9bdFOcwrucYKdAZydtZHWgBDCLf142YiEO+dso8p76NLszMJuQoX55/fFTaNodEDhVvrJ2Tah9F/KmUDDXHJhEOTnUuwrm80w6d7ZrgdXe1/5hS4y1ji6jVBfpUe4ntAAAAFQD3l0bFGd4anS35urHrAaRKnYOd3wAAAIEA57neWKNu4JMcO9vD1w2bY6hWYnlg97dll0qZX/CyUMJv9z1Hp4y6pgyd1uiheVHr0gsq9hXGdpxJxB7M8ZIjGdnlTBISeJ9PTI7xWNNWRChPdzmblx2tRHz8FH8VZS3Fle4/BO9/Tf/DBeBCrRgrN7smEslpWW/lE6aqRIF0pYcAAACBAJgmBXQC6ke9++JYHptu64x0cZhtUGZITbFRgAr0igwBc4LiJ41D4UsomPCzvlDL1e3nvYJKq2maFDwh/Lk2OLrkjXPVgBPoPrtCqzlSnG7lryG5WhAioQYUn91vHiEvk2VT4f218SDZnwJafP0ZSF+KMQ1q8OMljt88tcjJ0x7dAAAAFQC8aziBtvCXtMKKXn/etvR9vAIqPA==");
 

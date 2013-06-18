@@ -569,12 +569,12 @@ public class CryptoHelper {
   }
   
   /**
-   * Encode a key pair as an SSH Key Blob
+   * Encode a key pair as an SSH Private Key Blob
    * 
    * @param kp Public/private key pair to encode
-   * @return The encoded public key or null if provided key is not RSA or DSA
+   * @return The encoded private key or null if provided key is not RSA or DSA
    */
-  public static byte[] sshKeyBlobFromKeyPair(KeyPair kp) {
+  public static byte[] sshPrivateKeyBlobFromKeyPair(KeyPair kp) {
     if (kp.getPrivate() instanceof RSAPrivateKey) {
       //
       // Extract key parameters
