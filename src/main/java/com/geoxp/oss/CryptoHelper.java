@@ -31,6 +31,7 @@ import java.net.SocketAddress;
 import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.KeyFactory;
+import java.security.KeyPair;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
@@ -566,6 +567,101 @@ public class CryptoHelper {
       return null;
     }
   }
+  
+  /**
+   * Encode a key pair as an SSH Private Key Blob
+   * 
+   * @param kp Public/private key pair to encode
+   * @return The encoded private key or null if provided key is not RSA or DSA
+   */
+  public static byte[] sshPrivateKeyBlobFromKeyPair(KeyPair kp) {
+    if (kp.getPrivate() instanceof RSAPrivateKey) {
+      //
+      // Extract key parameters
+      //
+
+      BigInteger n = ((RSAPublicKey) kp.getPublic()).getModulus();
+      BigInteger e = ((RSAPublicKey) kp.getPublic()).getPublicExponent();
+      BigInteger d = ((RSAPrivateKey) kp.getPrivate()).getPrivateExponent();
+
+      // Not available and not used by ssh-agent anyway ...
+      BigInteger iqmp = BigInteger.ZERO;
+      BigInteger p = BigInteger.ZERO;
+      BigInteger q = BigInteger.ZERO;
+
+      byte[] tns = null;
+      try { tns = encodeNetworkString(SSH_RSA_PREFIX.getBytes("UTF-8")); } catch (UnsupportedEncodingException uee) {}
+      byte[] nns = encodeNetworkString(n.toByteArray());
+      byte[] ens = encodeNetworkString(e.toByteArray());
+      byte[] dns = encodeNetworkString(d.toByteArray());
+      byte[] iqmpns = encodeNetworkString(iqmp.toByteArray());
+      byte[] pns = encodeNetworkString(p.toByteArray());
+      byte[] qns = encodeNetworkString(q.toByteArray());
+
+      //
+      // Allocate array for blob
+      //
+
+      byte[] blob = new byte[tns.length + nns.length + ens.length + dns.length + iqmpns.length + pns.length + qns.length];
+
+      //
+      // Copy network strings to blob
+      //
+
+      System.arraycopy(tns, 0, blob, 0, tns.length);
+      System.arraycopy(nns, 0, blob, tns.length, nns.length);
+      System.arraycopy(ens, 0, blob, tns.length + nns.length, ens.length);
+      System.arraycopy(dns, 0, blob, tns.length + nns.length + ens.length, dns.length);
+      System.arraycopy(iqmpns, 0, blob, tns.length + nns.length + ens.length + dns.length, iqmpns.length);
+      System.arraycopy(pns, 0, blob, tns.length + nns.length + ens.length + dns.length + iqmpns.length, pns.length);
+      System.arraycopy(qns, 0, blob, tns.length + nns.length + ens.length + dns.length + iqmpns.length + pns.length, qns.length);
+
+      return blob;
+    } else  if (kp.getPrivate() instanceof DSAPrivateKey) {
+      //
+      // Extract key parameters
+      //
+
+      BigInteger p = ((DSAPublicKey) kp.getPublic()).getParams().getP();
+      BigInteger q = ((DSAPublicKey) kp.getPublic()).getParams().getQ();
+      BigInteger g = ((DSAPublicKey) kp.getPublic()).getParams().getG();
+      BigInteger y = ((DSAPublicKey) kp.getPublic()).getY();
+      BigInteger x = ((DSAPrivateKey) kp.getPrivate()).getX();
+
+      //
+      // Encode parameters as network strings
+      //
+
+      byte[] tns = null;
+      try { tns = encodeNetworkString(SSH_DSS_PREFIX.getBytes("UTF-8")); } catch (UnsupportedEncodingException uee) {}
+      byte[] pns = encodeNetworkString(p.toByteArray());
+      byte[] qns = encodeNetworkString(q.toByteArray());
+      byte[] gns = encodeNetworkString(g.toByteArray());
+      byte[] yns = encodeNetworkString(y.toByteArray());
+      byte[] xns = encodeNetworkString(x.toByteArray());
+
+      //
+      // Allocate array for blob
+      //
+
+      byte[] blob = new byte[tns.length + pns.length + qns.length + gns.length + yns.length + xns.length];
+
+      //
+      // Copy network strings to blob
+      //
+
+      System.arraycopy(tns, 0, blob, 0, tns.length);
+      System.arraycopy(pns, 0, blob, tns.length, pns.length);
+      System.arraycopy(qns, 0, blob, tns.length + pns.length, qns.length);
+      System.arraycopy(gns, 0, blob, tns.length + pns.length + qns.length, gns.length);
+      System.arraycopy(yns, 0, blob, tns.length + pns.length + qns.length + gns.length, yns.length);
+      System.arraycopy(xns, 0, blob, tns.length + pns.length + qns.length + gns.length + yns.length, xns.length);
+
+      return blob;
+    } else {
+      return null;    
+    }
+  }
 
   /**
    * Encode a public key as an SSH Key Blob
@@ -931,7 +1027,7 @@ public class CryptoHelper {
     private static final int AGENT_IDENTITIES_ANSWER      = 12;
     private static final int AGENTC_SIGN_REQUEST          = 13;
     private static final int AGENT_SIGN_RESPONSE          = 14;
-    //private static final int AGENTC_ADD_IDENTITY          = 17;
+    private static final int AGENTC_ADD_IDENTITY          = 17;
     //private static final int AGENTC_REMOVE_IDENTITY       = 18;
     //private static final int AGENTC_REMOVE_ALL_IDENTITIES = 19;
 
@@ -1173,6 +1269,33 @@ public class CryptoHelper {
           return callback.onSuccess(packet);
         }
       }
+    }
+    
+    /**
+     * Add an identity to the agent
+     * 
+     * @param keyblob SSH key blob
+     * @param comment A comment to describe the identity
+     * @return true if the identity has been succesfully loaded 
+     */
+    public boolean addIdentity(byte[] keyblob, String comment) throws IOException {
+      ByteArrayOutputStream request = new ByteArrayOutputStream();
+
+      request.write(keyblob);
+      request.write(encodeNetworkString(comment.getBytes()));
+
+      sendRequest(AGENTC_ADD_IDENTITY, request.toByteArray());
+
+      return (Boolean) awaitResponse(new AgentCallback() {
+        @Override
+        public Object onFailure(byte[] packet) {
+          return false;
+        }
+        @Override
+        public Object onSuccess(byte[] packet) {             
+          return true;
+        }
+      });
     }
 
     /**

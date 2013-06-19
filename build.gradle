@@ -63,6 +63,7 @@ repositories {
 
 dependencies {
   compile group: 'org.bouncycastle', name: 'bcprov-jdk15on', version: '1.47'
+  compile group: 'org.bouncycastle', name: 'bcpkix-jdk15on', version: '1.47'
   compile group: 'org.bouncycastle', name: 'bcpg-jdk15on', version: '1.47'
   compile group: 'javax.servlet', name: 'servlet-api', version: '2.5'
   compile group: 'com.google.inject', name: 'guice', version: '3.0'
