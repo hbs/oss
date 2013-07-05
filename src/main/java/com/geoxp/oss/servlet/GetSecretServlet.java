@@ -113,13 +113,13 @@ public class GetSecretServlet extends HttpServlet {
     }
            
     //
-    // Wrap secret (excluding nonce) with a temporary AES key
+    // Wrap secret with a temporary AES key
     //
     
     byte[] wrappingkey = new byte[32];
     CryptoHelper.getSecureRandom().nextBytes(wrappingkey);
     
-    secret = CryptoHelper.wrapAES(wrappingkey, secret, OSS.NONCE_BYTES, secret.length - OSS.NONCE_BYTES, false);
+    secret = CryptoHelper.wrapAES(wrappingkey, secret);
         
     //
     // Seal wrapping key with provided RSA pub key

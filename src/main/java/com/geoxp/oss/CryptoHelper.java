@@ -777,7 +777,7 @@ public class CryptoHelper {
         //
         
         byte[] tns = null;
-        try { encodeNetworkString(SSH_RSA_PREFIX.getBytes("UTF-8")); } catch (UnsupportedEncodingException uee) {}
+        try { tns = encodeNetworkString(SSH_RSA_PREFIX.getBytes("UTF-8")); } catch (UnsupportedEncodingException uee) {}
         byte[] sns = encodeNetworkString(sig);
         
         byte[] blob = new byte[tns.length + sns.length];
