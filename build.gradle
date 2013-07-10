@@ -3,6 +3,8 @@ apply plugin: 'eclipse'
 apply plugin: 'war'
 apply plugin: 'jetty'
 
+sourceCompatibility = 1.6
+
 configurations {
   tools
 }
