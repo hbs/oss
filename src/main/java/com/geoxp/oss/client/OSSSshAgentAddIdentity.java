@@ -65,7 +65,7 @@ public class OSSSshAgentAddIdentity {
     byte[] secret = OSSClient.getSecret(args[0], args[1], null);
     // Use the secret to unwrap the passphrase
     byte[] unwrap = CryptoHelper.unwrapBlob(secret, Hex.decode(args[3]));
-    String password = new String(unwrap, "UTF-8");
+    String password = new String(unwrap, "UTF-8").trim();
 
     // Read private keys
     // openssh store it in PEM format		
@@ -94,6 +94,7 @@ public class OSSSshAgentAddIdentity {
         }
       } catch (EncryptionException ee) {
         System.err.println("Can't read private key in " + sshKeyFile.getAbsolutePath());
+        ee.printStackTrace();
       }
 
       pem.close();
