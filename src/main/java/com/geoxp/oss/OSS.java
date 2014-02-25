@@ -39,6 +39,11 @@ public class OSS {
   private static final Logger LOGGER = LoggerFactory.getLogger(OSS.class);  
 
   /**
+   * Default strength for temporary RSA keys
+   */
+  public static final int DEFAULT_RSA_STRENGTH = 4096;
+
+  /**
    * Size of nonce to append to secrets prior to wrapping them. This is so
    * two identical secrets do not appear as identical secret files after wrapping.
    */
@@ -139,7 +144,7 @@ public class OSS {
     
     RSAKeyPairGenerator gen = new RSAKeyPairGenerator();
     // For explanation of 'certainty', refer to http://bouncy-castle.1462172.n4.nabble.com/Questions-about-RSAKeyGenerationParameters-td1463186.html
-    RSAKeyGenerationParameters params = new RSAKeyGenerationParameters(new BigInteger("65537"), CryptoHelper.getSecureRandom(), 2048, 64);
+    RSAKeyGenerationParameters params = new RSAKeyGenerationParameters(new BigInteger("65537"), CryptoHelper.getSecureRandom(), DEFAULT_RSA_STRENGTH, 64);
     gen.init(params);
     final AsymmetricCipherKeyPair keypair = gen.generateKeyPair();
         
