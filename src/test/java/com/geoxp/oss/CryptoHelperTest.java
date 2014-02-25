@@ -180,7 +180,7 @@ public class CryptoHelperTest {
     /*
     RSAKeyPairGenerator gen = new RSAKeyPairGenerator();
     // For explanation of 'certainty', refer to http://bouncy-castle.1462172.n4.nabble.com/Questions-about-RSAKeyGenerationParameters-td1463186.html
-    RSAKeyGenerationParameters params = new RSAKeyGenerationParameters(new BigInteger("65537"), CryptoHelper.getSecureRandom(), 2048, 64);
+    RSAKeyGenerationParameters params = new RSAKeyGenerationParameters(new BigInteger("65537"), CryptoHelper.getSecureRandom(), OSS.DEFAULT_RSA_STRENGTH, 64);
     gen.init(params);
     AsymmetricCipherKeyPair keypair = gen.generateKeyPair();
     CipherParameters priv = keypair.getPrivate();
@@ -373,7 +373,7 @@ public class CryptoHelperTest {
   @Test
   public void testSSHSignatureBlobSign_RSA() throws Exception {
     RSAKeyPairGenerator rsakpg = new RSAKeyPairGenerator();
-    RSAKeyGenerationParameters params = new RSAKeyGenerationParameters(new BigInteger("35"), new SecureRandom(),  2048, 8);
+    RSAKeyGenerationParameters params = new RSAKeyGenerationParameters(new BigInteger("35"), new SecureRandom(),  OSS.DEFAULT_RSA_STRENGTH, 8);
     rsakpg.init(params);
     
     AsymmetricCipherKeyPair kp = rsakpg.generateKeyPair();
