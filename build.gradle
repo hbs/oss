@@ -241,6 +241,7 @@ task ossClientJar(type: Jar, dependsOn: jar) {
         rule pattern: "com.etsy.net.**", result: '@0'
         rule pattern: "org.apache.pig.**", result: "@0"
         rule pattern: "org.apache.hadoop.**", result: "@0"
+	rule pattern: "org.w3c.**", result: "@0"
         rule pattern: "org.**", result: "com.geoxp.oss.jarjar.@0"
         rule pattern: "net.**", result: "com.geoxp.oss.jarjar.@0"
         rule pattern: "com.**", result: "com.geoxp.oss.jarjar.@0"
