@@ -332,7 +332,7 @@ public class OSSClient {
         //
 
         RSAKeyPairGenerator rsagen = new RSAKeyPairGenerator();
-        RSAKeyGenerationParameters params = new RSAKeyGenerationParameters(new BigInteger("65537"), CryptoHelper.getSecureRandom(), 2048, 64);
+        RSAKeyGenerationParameters params = new RSAKeyGenerationParameters(new BigInteger("65537"), CryptoHelper.getSecureRandom(), OSS.DEFAULT_RSA_STRENGTH, 64);
         rsagen.init(params);
         final AsymmetricCipherKeyPair keypair = rsagen.generateKeyPair();
 
@@ -1013,7 +1013,7 @@ public class OSSClient {
         //
 
         RSAKeyPairGenerator rsagen = new RSAKeyPairGenerator();
-        RSAKeyGenerationParameters params = new RSAKeyGenerationParameters(new BigInteger("65537"), CryptoHelper.getSecureRandom(), 2048, 64);
+        RSAKeyGenerationParameters params = new RSAKeyGenerationParameters(new BigInteger("65537"), CryptoHelper.getSecureRandom(), OSS.DEFAULT_RSA_STRENGTH, 64);
         rsagen.init(params);
         final AsymmetricCipherKeyPair keypair = rsagen.generateKeyPair();
 

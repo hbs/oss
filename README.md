@@ -21,6 +21,10 @@ Follow those steps to set up an OSS instance:
 	gradle buildjuds
 	gradle assemble
 
+Note: On OSX you may have to run the following first:
+
+        sudo ln -s /System/Library/Frameworks/JavaVM.framework/Headers /System/Library/Frameworks/JavaVM.framework/Home/include
+
 ## 2. Generate a master secret
 
 ### 2.1. Export your PGP keyring (we use gpg in the example below)
