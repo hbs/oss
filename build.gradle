@@ -230,7 +230,7 @@ task ossClientJar(type: Jar, dependsOn: jar) {
         // Iterate over .jar files
         //
         configurations.runtime.files.findAll {file ->
-          ['hadoop-', 'pig-', 'slf4j-', 'servlet-api', 'guice-servlet', 'guice', 'javax.inject', 'aopalliance', 'asm'].every { !file.name.startsWith(it) }
+          ['log4', 'hadoop-', 'pig-', 'slf4j-', 'servlet-api', 'guice-servlet', 'guice', 'javax.inject', 'aopalliance', 'asm'].every { !file.name.startsWith(it) }
         }.each {jarjarFile ->
           zipfileset(src: jarjarFile) {
             exclude(name: 'META-INF/**')
@@ -242,6 +242,8 @@ task ossClientJar(type: Jar, dependsOn: jar) {
         rule pattern: "org.apache.pig.**", result: "@0"
         rule pattern: "org.apache.hadoop.**", result: "@0"
 	rule pattern: "org.w3c.**", result: "@0"
+	rule pattern: "org.xml.**", result: "@0"
+	rule pattern: "org.apache.log4j.**", result: "@0"
         rule pattern: "org.**", result: "com.geoxp.oss.jarjar.@0"
         rule pattern: "net.**", result: "com.geoxp.oss.jarjar.@0"
         rule pattern: "com.**", result: "com.geoxp.oss.jarjar.@0"
