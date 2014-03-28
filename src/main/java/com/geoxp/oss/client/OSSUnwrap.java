@@ -54,17 +54,17 @@ public class OSSUnwrap {
 
     data.close();
 
-	//
-	// Hex decode data read on stdin
-	//
+    //
+    // Hex decode data read on stdin
+    //
 
-	byte[] decodedData = Hex.decode(data.toByteArray());
+    byte[] decodedData = Hex.decode(data.toByteArray());
 
-	//
-	// Unwrap data with retrieved secret
-	//
+    //
+    // Unwrap data with retrieved secret
+    //
 
-	byte[] unwrappedData = CryptoHelper.unwrapBlob(secret, decodedData);
+    byte[] unwrappedData = CryptoHelper.unwrapBlob(secret, decodedData);
 
     //
     // Output result
