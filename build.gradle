@@ -3,6 +3,8 @@ apply plugin: 'eclipse'
 apply plugin: 'war'
 apply plugin: 'jetty'
 
+sourceCompatibility = 1.6
+
 configurations {
   tools
 }
@@ -69,8 +71,8 @@ dependencies {
   compile group: 'com.google.inject', name: 'guice', version: '3.0'
   compile group: 'com.google.inject.extensions', name: 'guice-servlet', version: '3.0'
   compile group: 'com.google.code.gson', name: 'gson', version: '2.2.2'
-  compile group: 'org.apache.httpcomponents', name: 'httpcore', version: '4.2.2'
-  compile group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.2.2'
+  compile group: 'org.apache.httpcomponents', name: 'httpcore', version: '4.2.5'
+  compile group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.2.5'
   compile group: 'org.slf4j', name: 'slf4j-api', version: '1.6.6'
   compile group: 'org.slf4j', name: 'slf4j-simple', version: '1.6.6'
   compile group: 'org.apache.pig', name: 'pig', version: '0.8.0', transitive: false
@@ -228,7 +230,7 @@ task ossClientJar(type: Jar, dependsOn: jar) {
         // Iterate over .jar files
         //
         configurations.runtime.files.findAll {file ->
-          ['hadoop-', 'pig-', 'slf4j-', 'servlet-api', 'guice-servlet', 'guice', 'javax.inject', 'aopalliance', 'asm'].every { !file.name.startsWith(it) }
+          ['log4', 'hadoop-', 'pig-', 'slf4j-', 'servlet-api', 'guice-servlet', 'guice', 'javax.inject', 'aopalliance', 'asm'].every { !file.name.startsWith(it) }
         }.each {jarjarFile ->
           zipfileset(src: jarjarFile) {
             exclude(name: 'META-INF/**')
@@ -239,6 +241,9 @@ task ossClientJar(type: Jar, dependsOn: jar) {
         rule pattern: "com.etsy.net.**", result: '@0'
         rule pattern: "org.apache.pig.**", result: "@0"
         rule pattern: "org.apache.hadoop.**", result: "@0"
+	rule pattern: "org.w3c.**", result: "@0"
+	rule pattern: "org.xml.**", result: "@0"
+	rule pattern: "org.apache.log4j.**", result: "@0"
         rule pattern: "org.**", result: "com.geoxp.oss.jarjar.@0"
         rule pattern: "net.**", result: "com.geoxp.oss.jarjar.@0"
         rule pattern: "com.**", result: "com.geoxp.oss.jarjar.@0"

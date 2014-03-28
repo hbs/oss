@@ -27,6 +27,7 @@ import java.io.OutputStream;
 import org.bouncycastle.util.encoders.Hex;
 
 import com.geoxp.oss.CryptoHelper;
+import com.geoxp.oss.MasterSecretGenerator;
 import com.geoxp.oss.OSS;
 import com.geoxp.oss.OSSException;
 
@@ -73,15 +74,23 @@ public class OSSRekey {
     is.close();
     
     //
-    // Read file names from stdin
+    // unwrap both current and new master secrets with the internal control KEK
     //
-    
+
+    byte[] currentMS = CryptoHelper.unwrapAES(
+        MasterSecretGenerator.getMasterSecretWrappingKey(),
+        currentMasterSecret.toByteArray());
+    byte[] newMS = CryptoHelper.unwrapAES(
+        MasterSecretGenerator.getMasterSecretWrappingKey(),
+        newMasterSecret.toByteArray());
+
+    //
+    // loop on a list of secret files to rekey, provided on stdin
+    //
+
     BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-    
+
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    
-    byte[] currentMS = currentMasterSecret.toByteArray();
-    byte[] newMS = newMasterSecret.toByteArray();
 
     long nano = System.nanoTime();
     int count = 0;

@@ -94,6 +94,7 @@ public class OSSSshAgentAddIdentity {
         }
       } catch (EncryptionException ee) {
         System.err.println("Can't read private key in " + sshKeyFile.getAbsolutePath());
+        ee.printStackTrace();
       }
 
       pem.close();
