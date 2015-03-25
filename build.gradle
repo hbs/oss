@@ -132,7 +132,7 @@ task(OSSGenMasterSecret, dependsOn: 'build', type: JavaExec) {
   }
   main = 'com.geoxp.oss.client.OSSGenMasterSecret'
   classpath = sourceSets.main.runtimeClasspath
-  args System.getProperty('oss.url'), System.getProperty('oss.pubring'), System.getProperty('oss.keyid'), System.getProperty('oss.k')
+  args System.getProperty('oss.url',''), System.getProperty('oss.pubring',''), System.getProperty('oss.keyid',''), System.getProperty('oss.k','')
 }
 
 task(OSSInit, dependsOn: 'build') {
@@ -149,7 +149,7 @@ task(OSSInit, dependsOn: 'build') {
     }
     println 'To initialize OSS run the following command:'
     println ''
-    println 'gpg -d XXXXXXXX.oss | java -cp build/libs/oss-client.jar com.geoxp.oss.client.OSSInit ' + System.getProperty('oss.url') + ' ' + (null != System.getProperty('oss.sshkey') ? System.getProperty('oss.sshkey') : '')
+    println 'gpg -d XXXXXXXX.oss | java -cp build/libs/oss-client.jar com.geoxp.oss.client.OSSInit ' + System.getProperty('oss.url','') + ' ' + System.getProperty('oss.sshkey','')
   }
 }
 
@@ -163,7 +163,7 @@ task(OSSPutSecret, dependsOn: 'build') {
     }
     println 'To store a secret, run the following command:'
     println ''
-    println 'cat SECRET | java -cp build/libs/oss-client.jar com.geoxp.oss.client.OSSPutSecret ' + System.getProperty('oss.url') + ' ' + System.getProperty('oss.secret') + ' ' + (null != System.getProperty('oss.sshkey') ? System.getProperty('oss.sshkey') : '')
+    println 'cat SECRET | java -cp build/libs/oss-client.jar com.geoxp.oss.client.OSSPutSecret ' + System.getProperty('oss.url','') + ' ' + System.getProperty('oss.secret','') + ' ' + System.getProperty('oss.sshkey','')
   }
 }
 
@@ -177,7 +177,7 @@ task(OSSWrap, dependsOn: 'build') {
     }
     println 'To wrap data, run the following command:'
     println ''
-    println 'cat DATA | java -cp build/libs/oss-client.jar com.geoxp.oss.client.OSSWrap ' + System.getProperty('oss.url') + ' ' + System.getProperty('oss.secret') + ' ' + (null != System.getProperty('oss.sshkey') ? System.getProperty('oss.sshkey') : '')
+    println 'cat DATA | java -cp build/libs/oss-client.jar com.geoxp.oss.client.OSSWrap ' + System.getProperty('oss.url','') + ' ' + System.getProperty('oss.secret','') + ' ' + System.getProperty('oss.sshkey','')
   }
 }
 
@@ -192,7 +192,7 @@ task(OSSGenSecret, dependsOn: 'build', type: JavaExec) {
   }
   main = 'com.geoxp.oss.client.OSSGenSecret'
   classpath = sourceSets.main.runtimeClasspath
-  args System.getProperty('oss.url'), System.getProperty('oss.secret'), null != System.getProperty('oss.sshkey') ? System.getProperty('oss.sshkey') : ''
+  args System.getProperty('oss.url',''), System.getProperty('oss.secret',''), System.getProperty('oss.sshkey','')
 }
 
 task(OSSGetSecret, dependsOn: 'build', type: JavaExec) {
@@ -206,7 +206,7 @@ task(OSSGetSecret, dependsOn: 'build', type: JavaExec) {
   }
   main = 'com.geoxp.oss.client.OSSGetSecret'
   classpath = sourceSets.main.runtimeClasspath
-  args System.getProperty('oss.url'), System.getProperty('oss.secret'), null != System.getProperty('oss.sshkey') ? System.getProperty('oss.sshkey') : ''
+  args System.getProperty('oss.url',''), System.getProperty('oss.secret',''), System.getProperty('oss.sshkey', '')
 }
 
 task ossClientJar(type: Jar, dependsOn: jar) {
