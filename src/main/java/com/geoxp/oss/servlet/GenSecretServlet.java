@@ -17,6 +17,7 @@
 package com.geoxp.oss.servlet;
 
 import java.io.IOException;
+import java.util.Arrays;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -99,7 +100,10 @@ public class GenSecretServlet extends HttpServlet {
     // Wrap with master key
     //
     
-    byte[] wrappedsecret = CryptoHelper.wrapBlob(OSS.getMasterSecret(), secret);
+    byte[] k = OSS.getMasterSecret();
+    byte[] wrappedsecret = CryptoHelper.wrapBlob(k, secret);
+    Arrays.fill(k, (byte) 0);
+    Arrays.fill(secret, (byte) 0);
     
     try {
       OSS.getKeyStore().putSecret(new String(osstoken.getSecret(), "UTF-8"), wrappedsecret);

@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
 import java.security.PublicKey;
+import java.util.Arrays;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -115,7 +116,9 @@ public class GetACLServlet extends HttpServlet {
       
       in.close();
       
-      String acls = new String(CryptoHelper.unwrapBlob(OSS.getMasterSecret(), baos.toByteArray()), "UTF-8");
+      byte[] k = OSS.getMasterSecret();
+      String acls = new String(CryptoHelper.unwrapBlob(k, baos.toByteArray()), "UTF-8");
+      Arrays.fill(k, (byte) 0);
       
       BufferedReader br = new BufferedReader(new StringReader(acls));
       

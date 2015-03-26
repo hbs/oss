@@ -242,8 +242,19 @@ public class CryptoHelper {
     return wrapAES(key, data, 0, data.length, false);
   }
   
+  public static byte[] secureWrapAES(byte[] key, byte[] data) {
+    byte[] wrapped = wrapAES(key, data);
+    Arrays.fill(key, (byte) 0);
+    return wrapped;
+  }
   public static byte[] wrapBlob(byte[] key, byte[] blob) {
     return wrapAES(key, blob, 0, blob.length, true);
+  }
+  
+  public static byte[] secureWrapBlob(byte[] key, byte[] blob) {
+    byte[] wrapped = wrapBlob(key, blob);
+    Arrays.fill(key, (byte) 0);
+    return wrapped;
   }
   
   /**
@@ -288,10 +299,22 @@ public class CryptoHelper {
     return unwrapAES(key, data, false);
   }
   
+  public static byte[] secureUnwrapAES(byte[] key, byte[] data) {
+    byte[] unwrapped = unwrapAES(key, data);
+    Arrays.fill(key, (byte) 0);
+    return unwrapped;
+  }
+  
   public static byte[] unwrapBlob(byte[] key, byte[] blob) {
     return unwrapAES(key, blob, true);
   }
-    
+  
+  public static byte[] secureUnwrapBlob(byte[] key, byte[] blob) {
+    byte[] unwrapped = unwrapBlob(key, blob);
+    Arrays.fill(key, (byte) 0);
+    return unwrapped;
+  }
+  
   /**
    * Encrypt data using RSA.
    * CAUTION: this can take a while on large data

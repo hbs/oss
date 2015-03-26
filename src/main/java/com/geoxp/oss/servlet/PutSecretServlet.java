@@ -1,6 +1,7 @@
 package com.geoxp.oss.servlet;
 
 import java.io.IOException;
+import java.util.Arrays;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -107,7 +108,10 @@ public class PutSecretServlet extends HttpServlet {
     //
         
     try {          
-      OSS.getKeyStore().putSecret(new String(secretname, "UTF-8"), CryptoHelper.wrapBlob(OSS.getMasterSecret(), secret));
+      byte[] k = OSS.getMasterSecret();
+      OSS.getKeyStore().putSecret(new String(secretname, "UTF-8"), CryptoHelper.wrapBlob(k, secret));
+      Arrays.fill(k, (byte) 0);
+      Arrays.fill(secret, (byte) 0);
       LOGGER.info("[" + new String(Hex.encode(CryptoHelper.sshKeyBlobFingerprint(osstoken.getKeyblob()))) + "] stored " + secret.length + " bytes as secret '" + secretname + "'");
     } catch (OSSException e) {
       LOGGER.error("doPost", e);

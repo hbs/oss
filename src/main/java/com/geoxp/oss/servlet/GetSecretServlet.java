@@ -19,6 +19,7 @@ package com.geoxp.oss.servlet;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.security.PublicKey;
+import java.util.Arrays;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -104,8 +105,10 @@ public class GetSecretServlet extends HttpServlet {
     // Unwrap secret
     //
     
-    secret = CryptoHelper.unwrapBlob(OSS.getMasterSecret(), secret);
-   
+    byte[] k = OSS.getMasterSecret();
+    secret = CryptoHelper.unwrapBlob(k, secret);
+    Arrays.fill(k, (byte) 0);
+    
     if (null == secret) {
       LOGGER.error("[" + new String(Hex.encode(CryptoHelper.sshKeyBlobFingerprint(osstoken.getKeyblob()))) + "] failed to retrieve secret '" + new String(secretname, "UTF-8") + "', integrity check failed.");
       resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Secret integrity failed.");
@@ -119,8 +122,10 @@ public class GetSecretServlet extends HttpServlet {
     byte[] wrappingkey = new byte[32];
     CryptoHelper.getSecureRandom().nextBytes(wrappingkey);
     
-    secret = CryptoHelper.wrapAES(wrappingkey, secret);
-        
+    byte[] wrappedsecret = CryptoHelper.wrapAES(wrappingkey, secret);
+    Arrays.fill(secret, (byte) 0);
+    secret = wrappedsecret;
+    
     //
     // Seal wrapping key with provided RSA pub key
     //
@@ -128,6 +133,7 @@ public class GetSecretServlet extends HttpServlet {
     PublicKey rsapub = CryptoHelper.sshKeyBlobToPublicKey(rsapubblob);
         
     byte[] sealedwrappingkey = CryptoHelper.encryptRSA(rsapub, wrappingkey);
+    Arrays.fill(wrappingkey, (byte) 0);
     
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     baos.write(CryptoHelper.encodeNetworkString(secret));

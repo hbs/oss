@@ -18,8 +18,10 @@ package com.geoxp.oss;
 
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -89,7 +91,7 @@ public class OSS {
    * This is the master secret used by the instance of Open Secret Server to protect
    * the secrets it manages.
    */
-  private static byte[] MASTER_SECRET = null;
+  private static ByteBuffer MASTER_SECRET = null;
   
   /**
    * Public key part of a session RSA key pair.
@@ -172,7 +174,11 @@ public class OSS {
   }
   
   public static byte[] getMasterSecret() {
-    return MASTER_SECRET;
+    byte[] k = new byte[MASTER_SECRET.limit()];
+    ByteBuffer bb = MASTER_SECRET.duplicate();
+    bb.position(0);
+    bb.get(k);
+    return k;
   }
   
   public static RSAPublicKey getSessionRSAPublicKey() {
@@ -363,7 +369,9 @@ public class OSS {
     byte[] clearsecret = CryptoHelper.unwrapAES(MasterSecretGenerator.getMasterSecretWrappingKey(), secret);
     
     if (null != clearsecret) {
-      MASTER_SECRET = clearsecret;
+      MASTER_SECRET = ByteBuffer.allocateDirect(clearsecret.length);
+      MASTER_SECRET.put(clearsecret);
+      Arrays.fill(clearsecret, (byte) 0); 
       initSecrets.clear();
       return;
     }
@@ -387,7 +395,9 @@ public class OSS {
     byte[] sec = CryptoHelper.unwrapAES(MasterSecretGenerator.getMasterSecretWrappingKey(), mastersecret);
     
     if (null != sec) {
-      MASTER_SECRET = sec;
+      MASTER_SECRET = ByteBuffer.allocateDirect(sec.length);
+      MASTER_SECRET.put(sec);
+      Arrays.fill(sec, (byte) 0); 
       initSecrets.clear();
       return;
     }

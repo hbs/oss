@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.StringReader;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -151,7 +152,9 @@ public class AddACLServlet extends HttpServlet {
       
       in.close();
       
-      String acls = new String(CryptoHelper.unwrapBlob(OSS.getMasterSecret(), baos.toByteArray()), "UTF-8");
+      byte[] k = OSS.getMasterSecret();
+      String acls = new String(CryptoHelper.unwrapBlob(k, baos.toByteArray()), "UTF-8");
+      Arrays.fill(k, (byte) 0);
       
       BufferedReader br = new BufferedReader(new StringReader(acls));
       
@@ -178,7 +181,9 @@ public class AddACLServlet extends HttpServlet {
     
     synchronized(OSS.getKeyStore()) {
       OutputStream os = new FileOutputStream(aclfile);
-      os.write(CryptoHelper.wrapBlob(OSS.getMasterSecret(), sb.toString().getBytes("UTF-8")));
+      byte[] k = OSS.getMasterSecret();
+      os.write(CryptoHelper.wrapBlob(k, sb.toString().getBytes("UTF-8")));
+      Arrays.fill(k, (byte) 0);
       os.close();
     }
     

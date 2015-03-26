@@ -27,6 +27,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Reader;
 import java.io.StringReader;
+import java.util.Arrays;
 
 
 public class DirectoryHierarchyKeyStore extends KeyStore {
@@ -100,7 +101,9 @@ public class DirectoryHierarchyKeyStore extends KeyStore {
           baos.write(buf, 0, len);
         }
         in.close();
-        reader = new StringReader(new String(CryptoHelper.unwrapBlob(OSS.getMasterSecret(), baos.toByteArray()), "UTF-8"));
+        byte[] k = OSS.getMasterSecret();
+        reader = new StringReader(new String(CryptoHelper.unwrapBlob(k, baos.toByteArray()), "UTF-8"));
+        Arrays.fill(k, (byte) 0);
       }
       
       try {
