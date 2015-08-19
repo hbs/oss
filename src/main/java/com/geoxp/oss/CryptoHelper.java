@@ -41,10 +41,7 @@ import java.security.SecureRandom;
 import java.security.Security;
 import java.security.Signature;
 import java.security.SignatureException;
-import java.security.interfaces.DSAPrivateKey;
-import java.security.interfaces.DSAPublicKey;
-import java.security.interfaces.RSAPrivateKey;
-import java.security.interfaces.RSAPublicKey;
+import java.security.interfaces.*;
 import java.security.spec.DSAPublicKeySpec;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
@@ -64,6 +61,7 @@ import org.bouncycastle.crypto.engines.RSABlindedEngine;
 import org.bouncycastle.crypto.paddings.PKCS7Padding;
 import org.bouncycastle.crypto.params.KeyParameter;
 import org.bouncycastle.crypto.params.RSAKeyParameters;
+import org.bouncycastle.jcajce.provider.asymmetric.rsa.BCRSAPrivateCrtKey;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.openpgp.PGPCompressedDataGenerator;
 import org.bouncycastle.openpgp.PGPEncryptedDataGenerator;
@@ -607,10 +605,12 @@ public class CryptoHelper {
       BigInteger e = ((RSAPublicKey) kp.getPublic()).getPublicExponent();
       BigInteger d = ((RSAPrivateKey) kp.getPrivate()).getPrivateExponent();
 
-      // Not available and not used by ssh-agent anyway ...
-      BigInteger iqmp = BigInteger.ZERO;
-      BigInteger p = BigInteger.ZERO;
-      BigInteger q = BigInteger.ZERO;
+      //
+      // CrtCoef, P & Q are needed by the ssh-agent
+      //
+      BigInteger iqmp = ((BCRSAPrivateCrtKey) kp.getPrivate()).getCrtCoefficient();
+      BigInteger p = ((BCRSAPrivateCrtKey) kp.getPrivate()).getPrimeP();
+      BigInteger q = ((BCRSAPrivateCrtKey) kp.getPrivate()).getPrimeQ();
 
       byte[] tns = null;
       try { tns = encodeNetworkString(SSH_RSA_PREFIX.getBytes("UTF-8")); } catch (UnsupportedEncodingException uee) {}
