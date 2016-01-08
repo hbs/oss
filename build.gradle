@@ -2,11 +2,15 @@ apply plugin: 'java'
 apply plugin: 'eclipse'
 apply plugin: 'war'
 apply plugin: 'jetty'
+apply plugin: 'maven-publish'
+apply plugin: 'com.jfrog.bintray'
 
 sourceCompatibility = 1.6
 
 configurations {
   tools
+  archives
+  ossclient
 }
 
 //
@@ -15,8 +19,15 @@ configurations {
 //
 
 buildscript {
-  repositories { mavenCentral() }
-  dependencies { classpath 'org.ajoberstar:gradle-git:0.2.3' }
+  repositories {
+    mavenCentral()
+    jcenter()
+  }
+
+  dependencies {
+    classpath 'org.ajoberstar:gradle-git:0.2.3'
+    classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.4'
+  }
 }
 
 import org.ajoberstar.gradle.git.tasks.*;
@@ -252,6 +263,48 @@ task ossClientJar(type: Jar, dependsOn: jar) {
   }
 }
 
+
 assemble {
   dependsOn ossClientJar
 }
+
+/*
+artifacts {
+  archives(file('build/libs/oss-client.jar'))
+}
+publishing {
+  publications {
+    OSSClientPublication(MavenPublication) {
+      from components.java
+      groupId 'com.geoxp.oss'
+      artifactId 'oss-client'
+      version '1.0.0'
+    }
+  }
+}
+*/
+
+artifacts {
+  ossclient ossClientJar
+}
+
+bintray {
+  user = project.hasProperty('bintrayUser') ? project.property('bintrayUser') : System.getenv('BINTRAY_USER')
+  key = project.hasProperty('bintrayApiKey') ? project.property('bintrayApiKey') : System.getenv('BINTRAY_API_KEY')
+
+  configurations = ['ossclient']
+
+  pkg {
+    repo = 'maven'
+    name = 'oss-client'
+    licenses = ['Apache-2.0']
+    vcsUrl = 'https://github.com/hbs/oss.git'
+    version {
+      name = '1.0.0'
+      desc = 'Open Secret Server Client'
+      released  = new Date()
+      vcsTag = '1.0.0'
+    }
+  }
+}
+
