@@ -5,7 +5,7 @@ apply plugin: 'jetty'
 apply plugin: 'maven-publish'
 apply plugin: 'com.jfrog.bintray'
 
-sourceCompatibility = 1.6
+sourceCompatibility = 1.8
 
 configurations {
   tools
@@ -38,27 +38,37 @@ import org.ajoberstar.gradle.git.tasks.*;
 
 task clonejuds(type: GitClone) {
   def destination = file('juds')
-  uri = 'https://github.com/mcfunley/juds.git'
+  //uri = 'https://github.com/mcfunley/juds.git'
+  uri = 'https://github.com/CreditMutuelArkea/juds.git'
   destinationPath = destination
   bare = false
   enabled = !destination.exists() //to clone only once
 }
 
-task confjuds(type: Exec, dependsOn: 'clonejuds') {
+task autoconfjuds(type: Exec, dependsOn: 'clonejuds') {
   workingDir './juds'
-  if (!new File('./juds/juds-0.94.jar').exists()) {
-    commandLine './configure','CFLAGS=-I' + System.getProperty('java.home') + '/include'
+  if (!new File('./juds/juds-0.95.jar').exists()) {
+    commandLine './autoconf.sh'
   } else {
-    commandLine 'ls', 'juds-0.94.jar'
+    commandLine 'ls', 'juds-0.95.jar'
   }
 }
 
-task buildjuds(type: Exec, dependsOn: 'confjuds') {
+task configurejuds(type: Exec, dependsOn: 'autoconfjuds') {
   workingDir './juds'
-  if (!new File('./juds/juds-0.94.jar').exists()) {
+  if (!new File('./juds/juds-0.95.jar').exists()) {
+    commandLine './configure','CFLAGS=-I' + '/opt/java8/include'
+  } else {
+    commandLine 'ls', 'juds-0.95.jar'
+  }
+}
+
+task buildjuds(type: Exec, dependsOn: 'configurejuds') {
+  workingDir './juds'
+  if (!new File('./juds/juds-0.95.jar').exists()) {
     commandLine 'make'
   } else {
-    commandLine 'ls', 'juds-0.94.jar'
+    commandLine 'ls', 'juds-0.95.jar'
   }
 }
 
@@ -75,23 +85,23 @@ repositories {
 //
 
 dependencies {
-  compile group: 'org.bouncycastle', name: 'bcprov-jdk15on', version: '1.47'
-  compile group: 'org.bouncycastle', name: 'bcpkix-jdk15on', version: '1.47'
-  compile group: 'org.bouncycastle', name: 'bcpg-jdk15on', version: '1.47'
-  compile group: 'javax.servlet', name: 'servlet-api', version: '2.5'
-  compile group: 'com.google.inject', name: 'guice', version: '3.0'
-  compile group: 'com.google.inject.extensions', name: 'guice-servlet', version: '3.0'
-  compile group: 'com.google.code.gson', name: 'gson', version: '2.2.2'
-  compile group: 'org.apache.httpcomponents', name: 'httpcore', version: '4.2.5'
-  compile group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.2.5'
-  compile group: 'org.slf4j', name: 'slf4j-api', version: '1.6.6'
-  compile group: 'org.slf4j', name: 'slf4j-simple', version: '1.6.6'
-  compile group: 'org.apache.pig', name: 'pig', version: '0.8.0', transitive: false
-  compile group: 'org.apache.zookeeper', name: 'zookeeper', version: '3.3.5', transitive: false
-  compile group: 'org.apache.hadoop', name: 'hadoop-core', version: '0.20.2', transitive: false
-  compile group: 'log4j', name: 'log4j', version: '1.2.15', transitive: false
+  compile group: 'org.bouncycastle', name: 'bcprov-jdk15on', version: '1.55'
+  compile group: 'org.bouncycastle', name: 'bcpkix-jdk15on', version: '1.55'
+  compile group: 'org.bouncycastle', name: 'bcpg-jdk15on', version: '1.55'
+  compile group: 'javax.servlet', name: 'javax.servlet-api', version: '3.1.0'
+  compile group: 'com.google.inject', name: 'guice', version: '4.1.0'
+  compile group: 'com.google.inject.extensions', name: 'guice-servlet', version: '4.1.0'
+  compile group: 'com.google.code.gson', name: 'gson', version: '2.8.0'
+  //compile group: 'org.apache.httpcomponents', name: 'httpcore', version: '4.4.5'
+  compile group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.5.2'
+  compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.21'
+  //compile group: 'org.slf4j', name: 'slf4j-simple', version: '1.7.21'
+  compile group: 'org.apache.pig', name: 'pig', version: '0.16.0', transitive: false
+  compile group: 'org.apache.zookeeper', name: 'zookeeper', version: '3.4.8', transitive: false
+  compile group: 'org.apache.hadoop', name: 'hadoop-core', version: '1.2.1', transitive: false
+  //compile group: 'log4j', name: 'log4j', version: '1.2.17', transitive: false
   
-  compile files('juds/juds-0.94.jar')
+  compile files('juds/juds-0.95.jar')
   
   tools files('tools/jarjar-1.4.jar')
 
@@ -102,7 +112,7 @@ war {
   ext.clspth = []
 
   for (f in classpath) {
-    if (!f.toString().endsWith('juds-0.94.jar')) {
+    if (!f.toString().endsWith('juds-0.95.jar')) {
       ext.clspth.add(f)
     }
   }

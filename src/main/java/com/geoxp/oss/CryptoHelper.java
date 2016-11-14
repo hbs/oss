@@ -76,6 +76,7 @@ import org.bouncycastle.openpgp.PGPPublicKey;
 import org.bouncycastle.openpgp.PGPUtil;
 import org.bouncycastle.openpgp.operator.bc.BcPGPDataEncryptorBuilder;
 import org.bouncycastle.openpgp.operator.bc.BcPublicKeyKeyEncryptionMethodGenerator;
+import org.bouncycastle.openpgp.operator.bc.BcKeyFingerprintCalculator;
 import org.bouncycastle.util.encoders.Hex;
 
 import com.etsy.net.JUDS;
@@ -2690,7 +2691,7 @@ public class CryptoHelper {
   //
   
   public static List<PGPPublicKey> PGPPublicKeysFromKeyRing(String keyring) throws IOException {
-    PGPObjectFactory factory = new PGPObjectFactory(PGPUtil.getDecoderStream(new ByteArrayInputStream(keyring.getBytes("UTF-8"))));
+    PGPObjectFactory factory = new PGPObjectFactory(PGPUtil.getDecoderStream(new ByteArrayInputStream(keyring.getBytes("UTF-8"))), new BcKeyFingerprintCalculator());
     
     List<PGPPublicKey> pubkeys = new ArrayList<PGPPublicKey>();
 

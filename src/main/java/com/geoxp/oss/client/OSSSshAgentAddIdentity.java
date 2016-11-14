@@ -10,7 +10,7 @@ import java.util.Arrays;
 import java.util.List;
 import org.bouncycastle.util.encoders.Hex;
 import org.bouncycastle.openssl.EncryptionException;
-import org.bouncycastle.openssl.PEMReader;
+import org.bouncycastle.openssl.PEMParser;
 import org.bouncycastle.openssl.PasswordFinder;
 
 import com.geoxp.oss.CryptoHelper;
@@ -79,7 +79,8 @@ public class OSSSshAgentAddIdentity {
 
     for (File sshKeyFile : sshKeyFiles) {
       Reader fRd = new BufferedReader(new FileReader(sshKeyFile));
-      PEMReader pem = new PEMReader(fRd, new DefaultPasswordFinder(password.toCharArray()), "BC");
+      //PEMReader pem = new PEMReader(fRd, new DefaultPasswordFinder(password.toCharArray()), "BC");
+      PEMParser pem = new PEMParser(fRd);
 
       Object o;
       try {
