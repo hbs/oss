@@ -5,7 +5,7 @@ apply plugin: 'jetty'
 apply plugin: 'maven-publish'
 apply plugin: 'com.jfrog.bintray'
 
-sourceCompatibility = 1.8
+sourceCompatibility = 1.6
 
 configurations {
   tools
