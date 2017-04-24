@@ -342,7 +342,7 @@ public class CryptoHelper {
       if (key instanceof RSAPublicKey) {
         c.init(true, new RSAKeyParameters(true, ((RSAPublicKey) key).getModulus(), ((RSAPublicKey) key).getPublicExponent()));
       } else if (key instanceof RSAPrivateKey) {
-        c.init(true, new RSAKeyParameters(true, ((RSAPrivateKey) key).getModulus(), ((RSAPrivateKey) key).getPrivateExponent()));
+        c.init(true, new RSAKeyParameters(false, ((RSAPrivateKey) key).getModulus(), ((RSAPrivateKey) key).getPrivateExponent()));
       } else {
         return null;
       }
