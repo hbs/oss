@@ -1,17 +1,19 @@
-apply plugin: 'java'
-apply plugin: 'eclipse'
-apply plugin: 'war'
-apply plugin: 'jetty'
-apply plugin: 'maven-publish'
-apply plugin: 'com.jfrog.bintray'
+/*
+ * Copyright 2012-2021 Mathias Herberts
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
 
-sourceCompatibility = 1.6
-
-configurations {
-  tools
-  archives
-  ossclient
-}
 
 //
 // Dependency on gradle-git to download juds to download juds
@@ -21,16 +23,37 @@ configurations {
 buildscript {
   repositories {
     mavenCentral()
-    jcenter()
   }
 
   dependencies {
     classpath 'org.ajoberstar:gradle-git:0.2.3'
-    classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.4'
   }
 }
 
+plugins {
+  id 'java'
+  id 'eclipse'
+  id 'war'
+  id 'maven-publish'
+  id 'signing'
+}
+
+sourceCompatibility = 1.6
+
+configurations {
+  tools
+  archives
+  ossclient
+}
+
 import org.ajoberstar.gradle.git.tasks.*;
+
+//
+// Publishing infos
+//
+
+group = 'com.geoxp.oss'
+version = '1.0.1'
 
 //
 // Retrieve/Configure/Build JUDS
@@ -264,47 +287,98 @@ task ossClientJar(type: Jar, dependsOn: jar) {
 }
 
 
-assemble {
+publish {
   dependsOn ossClientJar
 }
 
-/*
-artifacts {
-  archives(file('build/libs/oss-client.jar'))
+task sourceJar(type: Jar) {
+  archiveClassifier = "sources"
 }
+
+task javadocJar(type: Jar) {
+  archiveClassifier = "javadoc"
+}
+
 publishing {
   publications {
     OSSClientPublication(MavenPublication) {
-      from components.java
-      groupId 'com.geoxp.oss'
-      artifactId 'oss-client'
-      version '1.0.0'
+      artifactId = 'oss-client'
+      artifact(file("${buildDir}/libs/oss-client-" + version + ".jar"))
+      artifact sourceJar
+      artifact javadocJar
+      pom {
+        name = 'Open Secret Server Client'
+        // optionally artifactId can be defined here
+        description = 'A java client for the Open Secret Server'
+        url = 'https://github.com/hbs/oss'
+
+        scm {
+          connection = 'scm:git:git://github.com/hbs/oss.git'
+          developerConnection = 'scm:git:git://github.com/hbs/oss.git'
+          url = 'https://github.com/hbs/oss'
+        }
+
+        licenses {
+          license {
+            name = 'The Apache License, Version 2.0'
+            url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+          }
+        }
+
+        developers {
+          developer {
+            id = 'herberts'
+            name = 'Mathias Herberts'
+            email = 'Mathias.Herberts@gmail.com'
+          }
+        }
+      }
+    }
+  }
+  repositories {
+    maven {
+      def stagingRepoUrl = 'https://oss.sonatype.org/service/local/staging/deploy/maven2/'
+      def snapshotsRepoUrl = 'https://oss.sonatype.org/content/repositories/snapshots/'
+      url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : stagingRepoUrl
+
+      credentials {
+        username = ossrhUsername
+        password = ossrhPassword
+      }
     }
   }
 }
-*/
+
+
+java {
+  withJavadocJar()
+  withSourcesJar()
+}
+
+javadoc {
+  source = sourceSets.main.allJava
+  classpath = configurations.compileClasspath
+
+  options
+  {
+    setMemberLevel JavadocMemberLevel.PUBLIC
+    setAuthor true
+
+    links "https://docs.oracle.com/javase/8/docs/api/"
+  }
+}
 
 artifacts {
-  ossclient ossClientJar
+  ossclient ossClientJar, javadocJar, sourcesJar
 }
 
-bintray {
-  user = project.hasProperty('bintrayUser') ? project.property('bintrayUser') : System.getenv('BINTRAY_USER')
-  key = project.hasProperty('bintrayApiKey') ? project.property('bintrayApiKey') : System.getenv('BINTRAY_API_KEY')
+signing {
+  useGpgCmd()
+  sign publishing.publications.OSSClientPublication
+}
 
-  configurations = ['ossclient']
-
-  pkg {
-    repo = 'maven'
-    name = 'oss-client'
-    licenses = ['Apache-2.0']
-    vcsUrl = 'https://github.com/hbs/oss.git'
-    version {
-      name = '1.0.0'
-      desc = 'Open Secret Server Client'
-      released  = new Date()
-      vcsTag = '1.0.0'
+javadoc {
+    if(JavaVersion.current().isJava9Compatible()) {
+        options.addBooleanOption('html5', true)
     }
-  }
 }
-
