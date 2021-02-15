@@ -1,3 +1,19 @@
+/*
+ * Copyright 2012-2021 Mathias Herberts
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
+
 package com.geoxp.oss.client;
 
 import java.io.BufferedReader;
@@ -8,15 +24,15 @@ import java.security.KeyPair;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import org.bouncycastle.util.encoders.Hex;
+
 import org.bouncycastle.openssl.EncryptionException;
 import org.bouncycastle.openssl.PEMReader;
 import org.bouncycastle.openssl.PasswordFinder;
+import org.bouncycastle.util.encoders.Hex;
 
 import com.geoxp.oss.CryptoHelper;
 import com.geoxp.oss.CryptoHelper.SSHAgentClient;
 import com.geoxp.oss.CryptoHelper.SSHAgentClient.SSHKey;
-import com.geoxp.oss.client.OSSClient;
 
 public class OSSSshAgentAddIdentity {
   private static class DefaultPasswordFinder implements PasswordFinder {
@@ -31,8 +47,8 @@ public class OSSSshAgentAddIdentity {
     public char[] getPassword() {
       return Arrays.copyOf(password, password.length);
     }
-  } 
-  
+  }
+
   final static String[] SSH_DEFAULT_KEY_FILENAMES = {"id_dsa", "id_rsa" };
 
   private static List<File> getDefaultsKeyFiles() {
@@ -46,7 +62,7 @@ public class OSSSshAgentAddIdentity {
       }
     }
 
-    return result;		
+    return result;
   }
 
   /**
@@ -68,7 +84,7 @@ public class OSSSshAgentAddIdentity {
     String password = new String(unwrap, "UTF-8");
 
     // Read private keys
-    // openssh store it in PEM format		
+    // openssh store it in PEM format
     List<File> sshKeyFiles;
     if (args.length > 4) {
       sshKeyFiles = new ArrayList<File>(1);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2013 Mathias Herberts
+ * Copyright 2012-2021 Mathias Herberts
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -19,8 +19,8 @@ package com.geoxp.oss.client;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
-import java.net.URI;
 import java.net.ProxySelector;
+import java.net.URI;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.util.ArrayList;

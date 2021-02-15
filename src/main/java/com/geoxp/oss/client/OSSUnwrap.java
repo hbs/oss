@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2013 Mathias Herberts
+ * Copyright 2012-2021 Mathias Herberts
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import java.io.ByteArrayOutputStream;
 import org.bouncycastle.util.encoders.Hex;
 
 import com.geoxp.oss.CryptoHelper;
-import com.geoxp.oss.OSS;
 import com.geoxp.oss.OSSException;
 
 public class OSSUnwrap {
