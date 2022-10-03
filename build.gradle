@@ -26,7 +26,7 @@ buildscript {
   }
 
   dependencies {
-    classpath 'org.ajoberstar:gradle-git:0.2.3'
+    classpath 'org.ajoberstar:gradle-git:1.5.1'
   }
 }
 
@@ -46,7 +46,7 @@ configurations {
   ossclient
 }
 
-import org.ajoberstar.gradle.git.tasks.*;
+import org.ajoberstar.grgit.*;
 
 //
 // Publishing infos
@@ -59,29 +59,37 @@ version = '1.0.1'
 // Retrieve/Configure/Build JUDS
 //
 
-task clonejuds(type: GitClone) {
+task clonejuds {
   def destination = file('juds')
-  uri = 'https://github.com/mcfunley/juds.git'
-  destinationPath = destination
-  bare = false
-  enabled = !destination.exists() //to clone only once
+  if (!destination.exists()) {
+    Grgit.clone(dir: file('juds'), uri: 'https://github.com/mcfunley/juds.git')
+  }
 }
 
-task confjuds(type: Exec, dependsOn: 'clonejuds') {
+task autoConfjuds(type: Exec, dependsOn: 'clonejuds') {
   workingDir './juds'
-  if (!new File('./juds/juds-0.94.jar').exists()) {
+  if (!new File('./juds/juds-0.95.jar').exists()) {
+    commandLine './autoconf.sh'
+  } else {
+    commandLine 'ls', 'juds-0.95.jar'
+  }
+}
+
+task confjuds(type: Exec, dependsOn: 'autoConfjuds') {
+  workingDir './juds'
+  if (!new File('./juds/juds-0.95.jar').exists()) {
     commandLine './configure','CFLAGS=-I' + System.getProperty('java.home') + '/include'
   } else {
-    commandLine 'ls', 'juds-0.94.jar'
+    commandLine 'ls', 'juds-0.95.jar'
   }
 }
 
 task buildjuds(type: Exec, dependsOn: 'confjuds') {
   workingDir './juds'
-  if (!new File('./juds/juds-0.94.jar').exists()) {
+  if (!new File('./juds/juds-0.95.jar').exists()) {
     commandLine 'make'
   } else {
-    commandLine 'ls', 'juds-0.94.jar'
+    commandLine 'ls', 'juds-0.95.jar'
   }
 }
 
@@ -98,34 +106,34 @@ repositories {
 //
 
 dependencies {
-  compile group: 'org.bouncycastle', name: 'bcprov-jdk15on', version: '1.47'
-  compile group: 'org.bouncycastle', name: 'bcpkix-jdk15on', version: '1.47'
-  compile group: 'org.bouncycastle', name: 'bcpg-jdk15on', version: '1.47'
-  compile group: 'javax.servlet', name: 'servlet-api', version: '2.5'
-  compile group: 'com.google.inject', name: 'guice', version: '3.0'
-  compile group: 'com.google.inject.extensions', name: 'guice-servlet', version: '3.0'
-  compile group: 'com.google.code.gson', name: 'gson', version: '2.2.2'
-  compile group: 'org.apache.httpcomponents', name: 'httpcore', version: '4.2.5'
-  compile group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.2.5'
-  compile group: 'org.slf4j', name: 'slf4j-api', version: '1.6.6'
-  compile group: 'org.slf4j', name: 'slf4j-simple', version: '1.6.6'
-  compile group: 'org.apache.pig', name: 'pig', version: '0.8.0', transitive: false
-  compile group: 'org.apache.zookeeper', name: 'zookeeper', version: '3.3.5', transitive: false
-  compile group: 'org.apache.hadoop', name: 'hadoop-core', version: '0.20.2', transitive: false
-  compile group: 'log4j', name: 'log4j', version: '1.2.15', transitive: false
+  implementation group: 'org.bouncycastle', name: 'bcprov-jdk15on', version: '1.47'
+  implementation group: 'org.bouncycastle', name: 'bcpkix-jdk15on', version: '1.47'
+  implementation group: 'org.bouncycastle', name: 'bcpg-jdk15on', version: '1.47'
+  implementation group: 'javax.servlet', name: 'servlet-api', version: '2.5'
+  implementation group: 'com.google.inject', name: 'guice', version: '3.0'
+  implementation group: 'com.google.inject.extensions', name: 'guice-servlet', version: '3.0'
+  implementation group: 'com.google.code.gson', name: 'gson', version: '2.2.2'
+  implementation group: 'org.apache.httpcomponents', name: 'httpcore', version: '4.2.5'
+  implementation group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.2.5'
+  implementation group: 'org.slf4j', name: 'slf4j-api', version: '1.6.6'
+  implementation group: 'org.slf4j', name: 'slf4j-simple', version: '1.6.6'
+  implementation group: 'org.apache.pig', name: 'pig', version: '0.8.0', transitive: false
+  implementation group: 'org.apache.zookeeper', name: 'zookeeper', version: '3.3.5', transitive: false
+  implementation group: 'org.apache.hadoop', name: 'hadoop-core', version: '0.20.2', transitive: false
+  implementation group: 'log4j', name: 'log4j', version: '1.2.15', transitive: false
   
-  compile files('juds/juds-0.94.jar')
+  implementation files('juds/juds-0.95.jar')
   
   tools files('tools/jarjar-1.4.jar')
 
-  testCompile group: 'junit', name: 'junit', version: '4.+'
+  testImplementation group: 'junit', name: 'junit', version: '4.+'
 }
 
 war {
   ext.clspth = []
 
   for (f in classpath) {
-    if (!f.toString().endsWith('juds-0.94.jar')) {
+    if (!f.toString().endsWith('juds-0.95.jar')) {
       ext.clspth.add(f)
     }
   }
@@ -263,7 +271,7 @@ task ossClientJar(type: Jar, dependsOn: jar) {
         //
         // Iterate over .jar files
         //
-        configurations.runtime.files.findAll {file ->
+        configurations.runtimeClasspath.files.findAll {file ->
           ['log4', 'hadoop-', 'pig-', 'slf4j-', 'servlet-api', 'guice-servlet', 'guice', 'javax.inject', 'aopalliance', 'asm'].every { !file.name.startsWith(it) }
         }.each {jarjarFile ->
           zipfileset(src: jarjarFile) {
@@ -342,8 +350,8 @@ publishing {
       url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : stagingRepoUrl
 
       credentials {
-        username = ossrhUsername
-        password = ossrhPassword
+        username = "ossrhUsername"
+        password = "ossrhPassword"
       }
     }
   }
