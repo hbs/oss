@@ -100,6 +100,18 @@ oss.token.ttl		Delay in ms during which authentication tokens will be considered
 
 	JAVA_OPTS="-Doss.keystore.dir=/var/tmp/oss-test -Doss.init.sshkeys=... -Doss.gensecret.sshkeys=... -Doss.putsecret.sshkeys=... -Doss.acl.sshkeys=..." gradle jettyRun
 
+When using oss with Gradle version above of 7.0, `gradle jettyRun` is not available anymore. However you can still download a version of jetty compatible with the jdk8: https://search.maven.org/artifact/org.eclipse.jetty/jetty-runner. Download the jetty jar file of a version `9.X`. 
+
+Then write a `run.sh` file which would look like: 
+
+```sh
+## run.sh file 
+export JAVA_OPTS="-Doss.keystore.dir=/var/tmp/oss-test -Doss.init.sshkeys=46:94:d7:......:26:d9:ac -Doss.gensecret.sshkeys=46:94:d7:......:26:d9:ac -Doss.putsecret.sshkeys=46:94:d7:......:26:d9:ac -Doss.acl.sshkeys=46:94:d7:......:26:d9:ac"
+echo "runing OSS war "
+java $JAVA_OPTS -jar jetty/jetty-runner-9.4.49.v20220914.jar --port 8080 --host 127.0.0.1 --path /oss build/libs/oss-1.0.1.war
+```
+
+And finally use this `run.sh` to start oss
 
 ## 4. Have K persons send their master secret split to OSS using the following command:
 
